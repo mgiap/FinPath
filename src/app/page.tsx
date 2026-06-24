@@ -1,215 +1,216 @@
-import Link from "next/link";
+import { getServerSession } from "next-auth";
 
-const features = [
+import AuthActions from "@/components/auth-actions";
+import { authOptions } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import type { Enrollment, UserBadge, Streak, LeaderboardEntry, User, Badge } from "@prisma/client";
+
+const guestSections = [
   {
-    title: "Course journeys",
-    description: "Organize business and finance content into courses, modules, and lessons.",
+    title: "See the learning structure",
+    text: "Courses, modules, and lessons will be organized into a clean progression.",
   },
   {
-    title: "Progress signals",
-    description: "Track points, levels, streaks, and completion bars to keep momentum visible.",
+    title: "Understand the feedback loop",
+    text: "Points, streaks, and badges will show progress without clutter.",
   },
   {
-    title: "Recognition loops",
-    description: "Reward activity with badges, leaderboards, and milestone unlocks.",
-  },
-  {
-    title: "Thesis-friendly structure",
-    description: "Keep the codebase easy to analyze, document, and extend during development.",
+    title: "Keep the thesis readable",
+    text: "The layout stays simple so the project is easy to explain and extend.",
   },
 ];
 
-const learningFlow = [
-  { step: "01", title: "Discover", text: "Browse finance themes and pick a learning path." },
-  { step: "02", title: "Practice", text: "Complete lessons, checkpoints, and reflective activities." },
-  { step: "03", title: "Progress", text: "Earn points, badges, and visible status updates." },
-  { step: "04", title: "Master", text: "Return to strengthen streaks and unlock advanced modules." },
-];
+// Signed-in sections are rendered from real data; keep guest sections above for previews.
 
-export default function Home() {
+export default async function Home() {
+  const session = await getServerSession(authOptions);
+  const isSignedIn = Boolean(session);
+  const displayName = session?.user?.name ?? "Learner";
+
+  let enrollments: Enrollment[] = [];
+  let recentBadges: (UserBadge & { badge: Badge | null })[] = [];
+  let lessonProgressCount = 0;
+  let streak: Streak | null = null;
+  let leaderboardEntry: LeaderboardEntry | null = null;
+  let userRecord: User | null = null;
+
+  if (isSignedIn && session?.user?.id) {
+    const userId = session.user.id;
+
+    userRecord = await prisma.user.findUnique({ where: { id: userId } });
+
+    enrollments = await prisma.enrollment.findMany({
+      where: { userId },
+      include: { course: true },
+      orderBy: { enrolledAt: "desc" },
+    });
+
+    lessonProgressCount = await prisma.lessonProgress.count({ where: { userId, completed: true } });
+
+    recentBadges = await prisma.userBadge.findMany({
+      where: { userId },
+      include: { badge: true },
+      orderBy: { unlockedAt: "desc" },
+      take: 6,
+    });
+
+    streak = await prisma.streak.findFirst({ where: { userId }, orderBy: { updatedAt: "desc" } });
+
+    leaderboardEntry = await prisma.leaderboardEntry.findFirst({ where: { userId, period: "all_time" } });
+  }
+
   return (
-    <main className="relative overflow-hidden">
+    <main className="relative min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.14),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(56,189,248,0.14),_transparent_24%),linear-gradient(180deg,_#f8fafc,_#eef6f1)] px-6 py-8 sm:px-10 lg:px-12">
       <div className="pointer-events-none absolute inset-0 -z-10">
-        <div className="absolute left-[-12%] top-[-10%] h-80 w-80 rounded-full bg-emerald-300/30 blur-3xl" />
-        <div className="absolute right-[-8%] top-24 h-96 w-96 rounded-full bg-sky-300/30 blur-3xl" />
-        <div className="absolute bottom-[-18%] left-1/3 h-96 w-96 rounded-full bg-amber-200/30 blur-3xl" />
+        <div className="absolute left-[-10%] top-[-8%] h-80 w-80 rounded-full bg-emerald-300/25 blur-3xl" />
+        <div className="absolute right-[-8%] top-20 h-96 w-96 rounded-full bg-sky-300/20 blur-3xl" />
       </div>
 
-      <div className="mx-auto flex min-h-screen w-full max-w-7xl flex-col px-6 py-6 sm:px-10 lg:px-12">
-        <header className="flex flex-col gap-4 rounded-[2rem] border border-black/10 bg-white/70 px-5 py-4 backdrop-blur md:flex-row md:items-center md:justify-between">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+        <header className="flex items-center justify-between py-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.32em] text-emerald-700">
               FinPath
             </p>
-            <p className="mt-1 text-sm text-slate-600">
-              Gamified e-learning for business and finance education.
-            </p>
           </div>
-          <div className="flex flex-wrap items-center gap-3 text-sm font-medium">
-            <Link
-              href="/dashboard"
-              className="rounded-full border border-slate-300 px-4 py-2 text-slate-700 transition hover:border-slate-400 hover:bg-slate-50"
-            >
-              Dashboard
-            </Link>
-            <Link
-              href="/api/auth/signin"
-              className="rounded-full bg-slate-950 px-4 py-2 text-white transition hover:bg-slate-800"
-            >
-              Sign in
-            </Link>
+          <div>
+            <AuthActions />
           </div>
         </header>
 
-        <section className="grid flex-1 gap-8 py-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center lg:py-12">
-          <div className="space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-800">
-              <span className="h-2 w-2 rounded-full bg-emerald-600" />
-              Thesis scaffold in progress
-            </div>
-
-            <div className="space-y-5">
-              <h1 className="max-w-3xl text-5xl font-semibold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl">
-                Build a finance learning platform that makes progress feel tangible.
-              </h1>
-              <p className="max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
-                FinPath is structured around courses, modules, and lessons, with points,
-                badges, streaks, levels, and leaderboards to support engagement and make
-                the teaching case easy to document.
-              </p>
-            </div>
-
-            <div className="flex flex-wrap gap-3">
-              <Link
-                href="/dashboard"
-                className="rounded-full bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-500"
-              >
-                Open learning dashboard
-              </Link>
-              <a
-                href="#curriculum"
-                className="rounded-full border border-slate-300 px-6 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-400 hover:bg-white"
-              >
-                View scaffold overview
-              </a>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-3">
-              {[
-                ["12", "planned lesson slots"],
-                ["5", "gamification systems"],
-                ["1", "teaching case thesis"],
-              ].map(([value, label]) => (
-                <div
-                  key={label}
-                  className="rounded-3xl border border-white/70 bg-white/80 p-4 shadow-sm backdrop-blur"
-                >
-                  <p className="text-3xl font-semibold text-slate-950">{value}</p>
-                  <p className="mt-1 text-sm text-slate-600">{label}</p>
-                </div>
-              ))}
-            </div>
+        <div className="rounded-[2rem] border border-black/10 bg-white/75 px-6 py-5 shadow-sm backdrop-blur">
+          <div className="max-w-3xl space-y-3">
+            <p className="text-sm font-medium text-slate-500">
+              {isSignedIn ? `Signed in as ${displayName}` : "Guest preview"}
+            </p>
+            <h1 className="text-4xl font-semibold tracking-tight text-slate-950 sm:text-5xl lg:text-6xl">
+              {isSignedIn
+                ? "Your learning space is ready."
+                : "A simple finance learning space, ready for guests and learners."}
+            </h1>
+            <p className="max-w-2xl text-base leading-7 text-slate-600 sm:text-lg">
+              {isSignedIn
+                ? "This version keeps the layout minimal and role-aware so the next step can focus on progress, content, and feedback instead of navigation."
+                : "Guests can preview the structure first. Signed-in learners will see the same core layout with personalized progress state later."}
+            </p>
           </div>
+        </div>
 
-          <aside className="rounded-[2rem] border border-slate-200 bg-slate-950 p-5 text-white shadow-2xl shadow-slate-950/20">
-            <div className="flex items-center justify-between gap-4">
+        <section className="grid gap-4 lg:grid-cols-3">
+          {!isSignedIn &&
+            guestSections.map((item) => (
+              <article
+                key={item.title}
+                className="rounded-[1.75rem] border border-white/70 bg-white/80 p-6 shadow-sm backdrop-blur"
+              >
+                <h2 className="text-lg font-semibold text-slate-950">{item.title}</h2>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{item.text}</p>
+              </article>
+            ))}
+
+          {isSignedIn && (
+            <>
+              <article className="rounded-[1.75rem] border border-white/70 bg-white/80 p-6 shadow-sm backdrop-blur">
+                <h2 className="text-lg font-semibold text-slate-950">Summary</h2>
+                <p className="mt-3 text-sm leading-6 text-slate-600">Quick view of your progress.</p>
+                <div className="mt-4 grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl bg-white p-3">
+                    <p className="text-xs text-slate-500">Points</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">{userRecord?.points ?? 0}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white p-3">
+                    <p className="text-xs text-slate-500">Level</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">{userRecord?.level ?? 1}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white p-3">
+                    <p className="text-xs text-slate-500">Streak</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">{streak?.currentCount ?? userRecord?.streakDays ?? 0} days</p>
+                  </div>
+                  <div className="rounded-2xl bg-white p-3">
+                    <p className="text-xs text-slate-500">Rank</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">{leaderboardEntry?.rank ?? "—"}</p>
+                  </div>
+                  <div className="rounded-2xl bg-white p-3">
+                    <p className="text-xs text-slate-500">Lessons Completed</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">{lessonProgressCount}</p>
+                  </div>
+                </div>
+              </article>
+
+              <article className="rounded-[1.75rem] border border-white/70 bg-white/80 p-6 shadow-sm backdrop-blur">
+                <h2 className="text-lg font-semibold text-slate-950">Active courses</h2>
+                <p className="mt-3 text-sm leading-6 text-slate-600">Courses you are enrolled in.</p>
+                <div className="mt-4 space-y-3">
+                  {enrollments.length === 0 && <p className="text-sm text-slate-500">No active enrollments yet.</p>}
+                  {enrollments.map((en) => (
+                    <div key={en.id} className="rounded-2xl border border-slate-200 p-3">
+                      <p className="font-medium text-slate-900">{en.course.title}</p>
+                      <p className="text-xs text-slate-500">{en.course.description}</p>
+                      <div className="mt-2 h-2 rounded-full bg-slate-100">
+                        <div className="h-full rounded-full bg-emerald-400" style={{ width: `${en.progressPercent}%` }} />
+                      </div>
+                      <p className="mt-1 text-right text-xs text-slate-500">{en.progressPercent}% complete</p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+
+              <article className="rounded-[1.75rem] border border-white/70 bg-white/80 p-6 shadow-sm backdrop-blur">
+                <h2 className="text-lg font-semibold text-slate-950">Recent badges</h2>
+                <p className="mt-3 text-sm leading-6 text-slate-600">Badges you have unlocked recently.</p>
+                <div className="mt-4 grid grid-cols-3 gap-3">
+                  {recentBadges.length === 0 && <p className="text-sm text-slate-500">No badges yet.</p>}
+                  {recentBadges.map((ub) => (
+                    <div key={ub.id} className="rounded-2xl border border-slate-200 p-3 text-center">
+                      <div className="mx-auto h-10 w-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold">{ub.badge?.icon ? <img src={ub.badge.icon} alt={ub.badge.name} /> : ub.badge?.name?.[0]}</div>
+                      <p className="mt-2 text-sm font-medium text-slate-900">{ub.badge?.name}</p>
+                      <p className="text-xs text-slate-500">{ub.unlockedAt ? new Date(ub.unlockedAt).toLocaleDateString() : ""}</p>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </>
+          )}
+        </section>
+
+        <section className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+          <aside className="rounded-[2rem] border border-slate-200 bg-slate-950 p-6 text-white shadow-lg">
+            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
+              Role view
+            </p>
+            <div className="mt-5 space-y-4">
               <div>
-                <p className="text-sm text-slate-300">Learning streak</p>
-                <p className="text-3xl font-semibold">14 days</p>
+                <p className="text-sm text-slate-400">Current state</p>
+                <p className="mt-1 text-2xl font-semibold">
+                  {isSignedIn ? "Signed-in learner" : "Guest preview"}
+                </p>
               </div>
-              <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-right">
-                <p className="text-xs uppercase tracking-[0.24em] text-slate-400">Level</p>
-                <p className="text-2xl font-semibold text-emerald-300">07</p>
+              <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                <p className="text-sm text-slate-300">Next focus</p>
+                <p className="mt-2 text-base leading-7 text-slate-200">
+                  {isSignedIn
+                    ? "Surface progress cards, current lesson, and streak status in the next pass."
+                    : "Keep the preview clean, with just enough structure to explain the product."}
+                </p>
               </div>
-            </div>
-
-            <div className="mt-6 rounded-3xl bg-white/5 p-4">
-              <div className="flex items-center justify-between text-sm text-slate-300">
-                <span>Weekly progress</span>
-                <span>68%</span>
-              </div>
-              <div className="mt-3 h-3 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full w-[68%] rounded-full bg-gradient-to-r from-emerald-400 to-cyan-400" />
-              </div>
-              <div className="mt-4 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-2xl bg-white/5 p-3">
-                  <p className="text-slate-400">Points</p>
-                  <p className="mt-1 text-lg font-semibold">2,480</p>
-                </div>
-                <div className="rounded-2xl bg-white/5 p-3">
-                  <p className="text-slate-400">Badges</p>
-                  <p className="mt-1 text-lg font-semibold">08 unlocked</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-6 space-y-3">
-              {[
-                ["Course completion", "75%", "bg-emerald-400"],
-                ["Module mastery", "52%", "bg-sky-400"],
-                ["Leaderboard rank", "#12", "bg-amber-400"],
-              ].map(([label, value, color]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="flex items-center justify-between text-sm text-slate-300">
-                    <span>{label}</span>
-                    <span className="font-semibold text-white">{value}</span>
-                  </div>
-                  <div className="mt-3 h-2 rounded-full bg-white/10">
-                    <div className={`h-full w-[62%] rounded-full ${color}`} />
-                  </div>
-                </div>
-              ))}
             </div>
           </aside>
-        </section>
 
-        <section id="curriculum" className="grid gap-4 py-6 md:grid-cols-2 xl:grid-cols-4">
-          {features.map((feature) => (
-            <article
-              key={feature.title}
-              className="rounded-[1.75rem] border border-black/10 bg-white/80 p-6 shadow-sm backdrop-blur"
-            >
-              <h2 className="text-lg font-semibold text-slate-950">{feature.title}</h2>
-              <p className="mt-3 text-sm leading-6 text-slate-600">{feature.description}</p>
-            </article>
-          ))}
-        </section>
-
-        <section className="grid gap-4 pb-6 lg:grid-cols-[0.9fr_1.1fr]">
           <div className="rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur">
             <p className="text-sm font-semibold uppercase tracking-[0.24em] text-emerald-700">
-              Learning loop
+              Simple layout first
             </p>
-            <div className="mt-6 space-y-4">
-              {learningFlow.map((item) => (
-                <div key={item.step} className="flex gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-950 text-sm font-semibold text-white">
-                    {item.step}
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-slate-950">{item.title}</h3>
-                    <p className="mt-1 text-sm leading-6 text-slate-600">{item.text}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[2rem] border border-slate-200 bg-slate-950 p-6 text-white shadow-lg">
-            <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-400">
-              Stack scaffold
-            </p>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            <div className="mt-5 grid gap-4 sm:grid-cols-2">
               {[
-                ["Next.js", "App Router + TypeScript"],
-                ["Prisma", "PostgreSQL schema + client"],
-                ["NextAuth.js", "Session and user scaffolding"],
-                ["Tailwind CSS", "Utility-first UI system"],
-              ].map(([label, detail]) => (
-                <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <p className="font-semibold text-emerald-300">{label}</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-300">{detail}</p>
-                </div>
+                ["One shared page", "Guest and learner states stay on the same screen."],
+                ["No route buttons", "Navigation will come later when the flows are ready."],
+                ["Readable sections", "Each block is easy to expand into real content."],
+                ["Role-aware copy", "The page can adapt to session data without extra chrome."],
+              ].map(([title, text]) => (
+                <article key={title} className="rounded-2xl border border-slate-200 p-4">
+                  <h3 className="font-semibold text-slate-950">{title}</h3>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">{text}</p>
+                </article>
               ))}
             </div>
           </div>
