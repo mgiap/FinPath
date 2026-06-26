@@ -8,6 +8,10 @@ declare module "next-auth" {
       points: number;
       level: number;
       streakDays: number;
+      avatarId: string | null;
+      featuredBadgeId: string | null;
+      featuredBadgeName: string | null;
+      featuredBadgeIcon: string | null;
     } & DefaultSession["user"];
   }
 
@@ -16,5 +20,7 @@ declare module "next-auth" {
     points: number;
     level: number;
     streakDays: number;
+    avatarId: string | null;
+    featuredBadgeId: string | null;
   }
 }

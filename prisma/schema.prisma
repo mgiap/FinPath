@@ -44,6 +44,8 @@ model User {
   level         Int      @default(1)
   streakDays    Int      @default(0)
   lastActiveAt  DateTime?
+  avatarId      String?           
+  featuredBadgeId String?         
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 

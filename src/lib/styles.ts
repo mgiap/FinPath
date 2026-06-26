@@ -25,7 +25,7 @@ export const styles = {
   pageSubtitle: "mt-2 text-slate-500",
   cardTitle: "text-base font-semibold text-slate-900 leading-snug",
   cardBody: "text-sm leading-6 text-slate-500",
-  label: "text-xs text-slate-400",
+  label: "text-xs text-slate-500",
 
   // Buttons / CTAs
   ctaPrimary: "inline-block rounded-xl bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700",
@@ -68,15 +68,40 @@ export const styles = {
   // Lesson complete banner
   completeBanner: "rounded-2xl border border-emerald-200 bg-emerald-50 p-4 flex items-center justify-between",
   completeBannerTitle: "text-sm font-medium text-emerald-800",
-  completeBannerSubtitle: "text-xs text-emerald-600 mt-0.5",
+  completeBannerSubtitle: "text-xs text-emerald-700 mt-0.5",
   completeBannerBtn: "rounded-xl bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors",
 
   // Sidebar
-  sidebarLabel: "text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3",
+  sidebarLabel: "text-xs font-semibold uppercase tracking-widest text-slate-600 mb-3",
   sidebarLinkActive: "flex items-center gap-3 rounded-2xl border p-3 text-sm border-emerald-200 bg-emerald-50 text-emerald-800 font-medium",
-  sidebarLinkInactive: "flex items-center gap-3 rounded-2xl border p-3 text-sm border-slate-200 bg-white text-slate-600 hover:border-emerald-200 transition-colors",
+  sidebarLinkInactive: "flex items-center gap-3 rounded-2xl border p-3 text-sm border-slate-200 bg-white text-slate-700 hover:border-emerald-200 transition-colors",
   sidebarDot: "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-xs",
 
+  heroBtnPrimary: "inline-block rounded-full bg-emerald-600 px-6 py-2 text-sm font-medium text-white hover:bg-emerald-700 transition-colors",
+  heroBtnSecondary: "inline-block text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors",
+
+  // Dashboard
+  dashboardGrid: "grid grid-cols-2 lg:grid-cols-4 gap-4",
+  statCard: "rounded-2xl border border-slate-200 p-5 space-y-1 min-h-[120px]",
+  statLabel: "text-xs font-medium uppercase tracking-widest text-slate-400",
+  statValue: "text-3xl font-semibold text-slate-900",
+  statSub: "text-xs text-slate-400 mt-1",
+  sectionTitle: "text-lg font-semibold text-slate-900 mb-4",
+  levelBarTrack: "h-2 w-full rounded-full bg-slate-100",
+  levelBarFill: "h-full rounded-full bg-emerald-400 transition-all",
+  badgeCard: "rounded-2xl border border-slate-200 p-4 text-center space-y-2",
+  badgeIcon: "mx-auto h-12 w-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold text-lg",
+
+  donutCard: "rounded-2xl border border-slate-200 p-4 flex flex-col items-center text-center gap-2",
+
+  // Leaderboard
+  leaderboardRow: "flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-4 transition-colors hover:border-emerald-200",
+  leaderboardRowHighlight: "flex items-center gap-4 rounded-2xl border border-emerald-300 bg-emerald-50 p-4",
+  leaderboardRank: "flex h-8 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-600",
+  leaderboardRankTop: "flex h-8 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-sm font-semibold text-white",
+  leaderboardAvatar: "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700",
+  tabActive: "rounded-full bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white",
+  tabInactive: "rounded-full px-4 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors",
 } as const;
 
 export const difficultyBadge: Record<string, string> = {
