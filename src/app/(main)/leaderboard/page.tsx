@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { styles } from "@/lib/styles";
 import Link from "next/link";
+import { getAvatar } from "@/lib/avatars";
 
 export default async function LeaderboardPage({
   searchParams,
@@ -83,9 +84,7 @@ export default async function LeaderboardPage({
           {ranked.map((entry) => {
             const isMe = entry.userId === userId;
             const isTop3 = entry.rank <= 3;
-            const initials = entry.user.name
-              ? entry.user.name.split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()
-              : "?";
+            const avatar = getAvatar(entry.user.avatarId);
 
             return (
               <div
@@ -98,10 +97,10 @@ export default async function LeaderboardPage({
                 </span>
 
                 {/* Avatar */}
-                <div className={styles.leaderboardAvatar}>
-                  {entry.user.image
-                    ? <img src={entry.user.image} alt={entry.user.name ?? ""} className="h-10 w-10 rounded-full object-cover" />
-                    : initials}
+                <div
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${avatar.gradient} text-lg`}
+                >
+                  {avatar.emoji}
                 </div>
 
                 {/* Name */}

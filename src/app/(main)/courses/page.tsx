@@ -53,8 +53,16 @@ export default async function CoursesPage() {
               className={`group flex flex-col ${styles.cardHover}`}
             >
               {/* Cover */}
-              <div className="mb-4 h-36 w-full rounded-2xl bg-gradient-to-br from-emerald-50 to-sky-50 flex items-center justify-center text-4xl select-none">
-                📘
+              <div className="mb-4 h-36 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-sky-50 flex items-center justify-center text-4xl select-none">
+                {course.coverImage ? (
+                  <img
+                    src={course.coverImage}
+                    alt={course.title}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  "📘"
+                )}
               </div>
 
               {/* Title + difficulty */}

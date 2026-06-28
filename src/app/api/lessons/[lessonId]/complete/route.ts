@@ -4,6 +4,16 @@ import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
+function isSameDay(a: Date, b: Date) {
+  return a.toDateString() === b.toDateString();
+}
+
+function isYesterday(earlier: Date, now: Date) {
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  const diff = now.setHours(0, 0, 0, 0) - new Date(earlier).setHours(0, 0, 0, 0);
+  return diff === oneDayMs;
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ lessonId: string }> }
@@ -54,6 +64,13 @@ export async function POST(
     where: { userId_lessonId: { userId, lessonId } },
   });
 
+  // collected for the toast — only populated on a genuinely new completion
+  let pointsEarned = 0;
+  const badgesUnlocked: string[] = [];
+  let newStreakCount: number | null = null;
+  let leveledUp = false;
+  let newLevel: number | null = null;
+
   if (!alreadyCompleted?.completed) {
     // mark lesson complete
     await prisma.lessonProgress.upsert({
@@ -68,10 +85,46 @@ export async function POST(
     });
 
     // award lesson points
+    pointsEarned += lesson.pointsAwarded;
     await prisma.user.update({
       where: { id: userId },
       data: { points: { increment: lesson.pointsAwarded } },
     });
+
+    // ── Streak update ─────────────────────────────────────────────
+    const streak = await prisma.streak.findFirst({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+    });
+    const now = new Date();
+
+    let currentCount: number;
+    if (!streak || !streak.lastActivityAt) {
+      currentCount = 1;
+    } else if (isSameDay(streak.lastActivityAt, now)) {
+      currentCount = streak.currentCount; // already active today, no change
+    } else if (isYesterday(streak.lastActivityAt, now)) {
+      currentCount = streak.currentCount + 1;
+    } else {
+      currentCount = 1; // streak broken
+    }
+    const longestCount = Math.max(streak?.longestCount ?? 0, currentCount);
+
+    if (streak) {
+      await prisma.streak.update({
+        where: { id: streak.id },
+        data: { currentCount, longestCount, lastActivityAt: now },
+      });
+    } else {
+      await prisma.streak.create({
+        data: { userId, currentCount, longestCount, lastActivityAt: now },
+      });
+    }
+    await prisma.user.update({
+      where: { id: userId },
+      data: { streakDays: currentCount },
+    });
+    newStreakCount = currentCount;
 
     // recalculate enrollment progress
     const allLessons = lesson.module.course.modules.flatMap((m) => m.lessons);
@@ -103,6 +156,8 @@ export async function POST(
           where: { id: userId },
           data: { points: { increment: firstStepBadge.pointsReward } },
         });
+        pointsEarned += firstStepBadge.pointsReward;
+        badgesUnlocked.push(firstStepBadge.name);
       }
     }
 
@@ -125,12 +180,19 @@ export async function POST(
           where: { id: userId },
           data: { points: { increment: courseBadge.pointsReward } },
         });
+        pointsEarned += courseBadge.pointsReward;
+        badgesUnlocked.push(courseBadge.name);
       }
     }
 
     // sync level LAST after all points including badges
-    const finalUser = await prisma.user.findUnique({ where: { id: userId } });
-    const finalLevel = Math.floor((finalUser?.points ?? 0) / 100) + 1;
+    const userBeforeLevelSync = await prisma.user.findUnique({ where: { id: userId } });
+    const previousLevel = userBeforeLevelSync?.level ?? 1;
+    const finalLevel = Math.floor((userBeforeLevelSync?.points ?? 0) / 100) + 1;
+    if (finalLevel > previousLevel) {
+      leveledUp = true;
+      newLevel = finalLevel;
+    }
     await prisma.user.update({
       where: { id: userId },
       data: { level: finalLevel },
@@ -170,7 +232,22 @@ export async function POST(
 
   const courseSlug = lesson.module.course.slug;
   const lessonSlug = lesson.slug;
-  return NextResponse.redirect(
-    new URL(`/courses/${courseSlug}/lessons/${lessonSlug}`, req.url)
-  );
+
+  const redirectUrl = new URL(`/courses/${courseSlug}/lessons/${lessonSlug}`, req.url);
+
+  // only attach toast data if something was actually newly earned
+  if (pointsEarned > 0) {
+    redirectUrl.searchParams.set("earned", String(pointsEarned));
+    if (badgesUnlocked.length > 0) {
+      redirectUrl.searchParams.set("badges", badgesUnlocked.join(","));
+    }
+    if (newStreakCount !== null) {
+      redirectUrl.searchParams.set("streak", String(newStreakCount));
+    }
+    if (leveledUp && newLevel !== null) {
+      redirectUrl.searchParams.set("level", String(newLevel));
+    }
+  }
+
+  return NextResponse.redirect(redirectUrl);
 }

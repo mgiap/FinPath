@@ -5,9 +5,17 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { styles } from "@/lib/styles";
+import LessonRewardToast from "@/components/lesson-reward-toast";
 
-export default async function LessonPage({ params }: { params: Promise<{ slug: string; lessonSlug: string }> }) {
+export default async function LessonPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string; lessonSlug: string }>;
+  searchParams: Promise<{ earned?: string; badges?: string; streak?: string; level?: string }>;
+}) {
   const { slug, lessonSlug } = await params;
+  const sp = await searchParams;
   const session = await getServerSession(authOptions);
   const userId = session!.user.id;
 
@@ -48,8 +56,21 @@ export default async function LessonPage({ params }: { params: Promise<{ slug: s
   const nextLesson = allLessons[currentIndex + 1] ?? null;
   const isCompleted = progress?.completed ?? false;
 
+  const pointsEarned = sp.earned ? Number(sp.earned) : null;
+  const badgesUnlocked = sp.badges ? sp.badges.split(",") : [];
+  const streakCount = sp.streak ? Number(sp.streak) : null;
+  const newLevel = sp.level ? Number(sp.level) : null;
+
   return (
     <div className={styles.pageWrapper}>
+      <LessonRewardToast
+        pointsEarned={pointsEarned}
+        badgesUnlocked={badgesUnlocked}
+        streakCount={streakCount}
+        newLevel={newLevel}
+        pathname={`/courses/${slug}/lessons/${lessonSlug}`}
+      />
+
       <Link href={`/courses/${slug}`} className={`${styles.label} hover:text-slate-700 transition-colors`}>
         ← Back to course
       </Link>

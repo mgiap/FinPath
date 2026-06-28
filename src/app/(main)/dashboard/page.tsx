@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { styles } from "@/lib/styles";
 import { progressColor } from "@/lib/utils";
+import { getEffectiveStreak } from "@/lib/streak";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -38,6 +39,8 @@ export default async function DashboardPage() {
   const pointsToNextLevel = 100;
   const levelPercent = Math.round((pointsIntoCurrentLevel / pointsToNextLevel) * 100);
 
+  const displayStreak = getEffectiveStreak(streak?.currentCount ?? user?.streakDays ?? 0, streak?.lastActivityAt);
+
   return (
     <div className={styles.pageWrapper}>
       <div className="mb-8">
@@ -50,7 +53,7 @@ export default async function DashboardPage() {
         {[
           ["Points", points, "total XP earned"],
           ["Lessons done", lessonProgressCount, "completed so far"],
-          ["Streak", `${streak?.currentCount ?? user?.streakDays ?? 0}`, "days in a row"],
+          ["Streak", `${displayStreak}`, "days in a row"],
           ["Rank", myRank === 0 ? "—" : `#${myRank}`, "on leaderboard"],
         ].map(([label, value, sub]) => (
           <div

@@ -6,6 +6,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { styles } from "@/lib/styles";
 import { progressColor } from "@/lib/utils";
+import { getEffectiveStreak } from "@/lib/streak";
 import type { Enrollment, Streak, LeaderboardEntry, User, Course } from "@prisma/client";
 
 const guestSections = [
@@ -57,15 +58,14 @@ export default async function Home() {
     lessonProgressCount = await prisma.lessonProgress.count({ where: { userId, completed: true } });
   }
 
-  // Rank computed on the fly from sorted entries, same fix as dashboard —
-  // don't trust a possibly-stale stored `rank` column.
   const myRankIndex = leaderboardEntries.findIndex((e) => e.userId === session?.user?.id);
   const myRank = myRankIndex === -1 ? null : myRankIndex + 1;
   const topThree = leaderboardEntries.slice(0, 3);
   const medals = ["🥇", "🥈", "🥉"];
 
-  // Only courses the user is actually learning — progress > 0%.
   const activeEnrollments = enrollments.filter((en) => en.progressPercent > 0);
+
+  const displayStreak = getEffectiveStreak(streak?.currentCount ?? userRecord?.streakDays ?? 0, streak?.lastActivityAt);
 
   return (
     <main className={`relative min-h-screen overflow-hidden ${styles.pageBg} px-6 py-8 sm:px-10 lg:px-12`}>
@@ -137,7 +137,7 @@ export default async function Home() {
                   {[
                     ["Points", userRecord?.points ?? 0],
                     ["Level", userRecord?.level ?? 1],
-                    ["Streak", `${streak?.currentCount ?? userRecord?.streakDays ?? 0} days`],
+                    ["Streak", `${displayStreak} days`],
                     ["Rank", myRank === null ? "—" : `#${myRank}`],
                     ["Lessons done", lessonProgressCount],
                   ].map(([label, value]) => (
