@@ -105,6 +105,11 @@ export const styles = {
 
   lessonRowChallenge: "flex items-center gap-3 rounded-2xl border p-3 transition-colors border-amber-100 bg-amber-50/50 hover:border-amber-200",
   lessonDotChallenge: "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium bg-amber-200 text-amber-700",
+
+  formLabel: "block text-sm font-medium text-slate-700 mb-1",
+  formInput: "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-emerald-400 focus:outline-none",
+  formSelect: "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-emerald-400 focus:outline-none",
+  formTextarea: "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-emerald-400 focus:outline-none resize-none",
 } as const;
 
 export const difficultyBadge: Record<string, string> = {
