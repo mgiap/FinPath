@@ -37,7 +37,7 @@ export default async function MainLayout({
         </div>
       </nav>
 
-      <main className="flex-1">
+      <main className="flex-1 animate-fade-in">
         {children}
       </main>
     </div>

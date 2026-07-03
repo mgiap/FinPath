@@ -100,7 +100,7 @@ export default function ProfileForm({
             <button
               type="button"
               onClick={() => setFeaturedBadgeId(null)}
-              className={`rounded-full border px-3 py-1.5 text-xs ${
+              className={`rounded-full border px-3 py-1.5 text-xs text-slate-900 ${
                 featuredBadgeId === null ? "border-emerald-500 bg-emerald-50" : "border-slate-200"
               }`}
             >
@@ -111,7 +111,7 @@ export default function ProfileForm({
                 key={b.id}
                 type="button"
                 onClick={() => setFeaturedBadgeId(b.id)}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs ${
+                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs text-slate-900 ${
                   featuredBadgeId === b.id ? "border-emerald-500 bg-emerald-50" : "border-slate-200"
                 }`}
               >

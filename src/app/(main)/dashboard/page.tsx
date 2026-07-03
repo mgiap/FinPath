@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { styles } from "@/lib/styles";
 import { progressColor } from "@/lib/utils";
 import { getEffectiveStreak } from "@/lib/streak";
+import DonutChart from "@/components/donut-chart";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -55,10 +56,12 @@ export default async function DashboardPage() {
           ["Lessons done", lessonProgressCount, "completed so far"],
           ["Streak", `${displayStreak}`, "days in a row"],
           ["Rank", myRank === 0 ? "—" : `#${myRank}`, "on leaderboard"],
-        ].map(([label, value, sub]) => (
+        ].map(([label, value, sub], i) => (
           <div
             key={String(label)}
+            className="animate-pop-in"
             style={{
+              animationDelay: `${i * 60}ms`,
               background: "white",
               borderRadius: "1rem",
               border: "1px solid #e2e8f0",
@@ -80,7 +83,7 @@ export default async function DashboardPage() {
           <p className={styles.statSub}>{pointsIntoCurrentLevel} / {pointsToNextLevel} XP — Level {level}</p>
         </div>
         <div className={styles.levelBarTrack}>
-          <div className={styles.levelBarFill} style={{ width: `${levelPercent}%` }} />
+          <div className={`${styles.levelBarFill} progress-fill-animate`} style={{ width: `${levelPercent}%` }} />
         </div>
         <p className={`mt-2 ${styles.label}`}>
           Earn {pointsToNextLevel - pointsIntoCurrentLevel} more points to reach Level {level + 1}
@@ -99,7 +102,7 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-3 gap-4">
           {enrollments.map((en) => {
             const pct = en.progressPercent;
-            const r = 40;
+            const r = 44;
             const circ = 2 * Math.PI * r;
             const filled = (pct / 100) * circ;
             const gap = circ - filled;
@@ -111,25 +114,10 @@ export default async function DashboardPage() {
                 href={`/courses/${en.course.slug}`}
                 className="flex flex-row items-center gap-4 p-5 rounded-2xl border border-slate-200 bg-slate-50 hover:border-emerald-200 transition-colors"
               >
-                <svg width="200" height="200" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r={r} fill="none" stroke="#e2e8f0" strokeWidth="10" />
-                  <circle
-                    cx="50" cy="50" r={r}
-                    fill="none"
-                    stroke={stroke}
-                    strokeWidth="10"
-                    strokeDasharray={`${filled} ${gap}`}
-                    strokeLinecap="round"
-                    transform="rotate(-90 50 50)"
-                  />
-                  <text x="50" y="50" textAnchor="middle" dominantBaseline="middle" fontSize="16" fontWeight="700" fill="#0f172a">
-                    {pct}%
-                  </text>
-                </svg>
+                <DonutChart pct={pct} stroke={stroke} size={120} />
                 <div className="flex flex-col justify-center gap-1 min-w-0">
                   <p className={styles.cardTitle}>{en.course.title}</p>
                   <p className={`text-xs leading-5 ${styles.label}`}>{en.course.description}</p>
-                  <p className={`text-xs ${styles.label}`}>{en.status.toLowerCase()}</p>
                 </div>
               </Link>
             );

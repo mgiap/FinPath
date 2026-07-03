@@ -15,7 +15,7 @@ enum UserRole {
 enum LessonType {
   ARTICLE
   VIDEO
-  QUIZ
+  CHALLENGE
   ASSIGNMENT
 }
 
@@ -34,20 +34,20 @@ enum BadgeRarity {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  name          String?
-  email         String?  @unique
-  emailVerified DateTime?
-  image         String?
-  role          UserRole @default(LEARNER)
-  points        Int      @default(0)
-  level         Int      @default(1)
-  streakDays    Int      @default(0)
-  lastActiveAt  DateTime?
-  avatarId      String?           
-  featuredBadgeId String?         
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id              String   @id @default(cuid())
+  name            String?
+  email           String?  @unique
+  emailVerified   DateTime?
+  image           String?
+  role            UserRole @default(LEARNER)
+  points          Int      @default(0)
+  level           Int      @default(1)
+  streakDays      Int      @default(0)
+  lastActiveAt    DateTime?
+  avatarId        String?
+  featuredBadgeId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
   accounts           Account[]
   sessions           Session[]
@@ -70,9 +70,9 @@ model Course {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  modules    Module[]
-  enrollments Enrollment[]
-  badges     Badge[]
+  modules            Module[]
+  enrollments        Enrollment[]
+  badges             Badge[]
   leaderboardEntries LeaderboardEntry[]
 }
 
@@ -98,28 +98,29 @@ model Lesson {
   slug             String
   summary          String?
   content          String?
+  challengeData    Json?
   order            Int        @default(0)
   estimatedMinutes Int?
   type             LessonType @default(ARTICLE)
   pointsAwarded    Int        @default(10)
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
-  module        Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  progress      LessonProgress[]
+  module   Module           @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress LessonProgress[]
 
   @@unique([moduleId, slug])
   @@index([moduleId, order])
 }
 
 model Enrollment {
-  id             String            @id @default(cuid())
-  userId         String
-  courseId       String
-  status         EnrollmentStatus  @default(ACTIVE)
-  enrolledAt     DateTime          @default(now())
-  completedAt    DateTime?
-  progressPercent Int               @default(0)
+  id              String           @id @default(cuid())
+  userId          String
+  courseId        String
+  status          EnrollmentStatus @default(ACTIVE)
+  enrolledAt      DateTime         @default(now())
+  completedAt     DateTime?
+  progressPercent Int              @default(0)
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -129,15 +130,16 @@ model Enrollment {
 }
 
 model LessonProgress {
-  id            String   @id @default(cuid())
-  userId        String
-  lessonId      String
-  completed     Boolean  @default(false)
-  completedAt   DateTime?
-  score         Int?
-  lastOpenedAt  DateTime @default(now())
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id                String   @id @default(cuid())
+  userId            String
+  lessonId          String
+  completed         Boolean  @default(false)
+  completedAt       DateTime?
+  score             Int?
+  firstAttemptScore Int?
+  lastOpenedAt      DateTime @default(now())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   lesson Lesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
@@ -147,18 +149,18 @@ model LessonProgress {
 }
 
 model Badge {
-  id            String      @id @default(cuid())
-  courseId      String?
-  code          String      @unique
-  name          String
-  description   String
-  icon          String?
-  rarity        BadgeRarity @default(COMMON)
-  pointsReward  Int         @default(0)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id           String      @id @default(cuid())
+  courseId     String?
+  code         String      @unique
+  name         String
+  description  String
+  icon         String?
+  rarity       BadgeRarity @default(COMMON)
+  pointsReward Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
-  course   Course?    @relation(fields: [courseId], references: [id], onDelete: SetNull)
+  course     Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
   userBadges UserBadge[]
 
   @@index([courseId, rarity])
@@ -200,7 +202,7 @@ model LeaderboardEntry {
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
   course Course? @relation(fields: [courseId], references: [id], onDelete: SetNull)
 
   @@index([period, points])

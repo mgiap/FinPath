@@ -1,18 +1,8 @@
-// src/app/api/lessons/[lessonId]/complete/route.ts
 import { getServerSession } from "next-auth";
 import { NextResponse } from "next/server";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-
-function isSameDay(a: Date, b: Date) {
-  return a.toDateString() === b.toDateString();
-}
-
-function isYesterday(earlier: Date, now: Date) {
-  const oneDayMs = 24 * 60 * 60 * 1000;
-  const diff = now.setHours(0, 0, 0, 0) - new Date(earlier).setHours(0, 0, 0, 0);
-  return diff === oneDayMs;
-}
+import { completeLessonForUser, NotEnrolledError } from "@/lib/complete-lesson";
 
 export async function POST(
   req: Request,
@@ -26,228 +16,28 @@ export async function POST(
   const { lessonId } = await params;
   const userId = session.user.id;
 
-  const lesson = await prisma.lesson.findUnique({
-    where: { id: lessonId },
-    include: {
-      module: {
-        include: {
-          course: {
-            include: {
-              modules: {
-                include: { lessons: true },
-              },
-            },
-          },
-        },
-      },
-    },
-  });
+  const lesson = await prisma.lesson.findUnique({ where: { id: lessonId } });
+  if (!lesson) return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
 
-  if (!lesson) {
-    return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
+  try {
+    const reward = await completeLessonForUser(userId, lessonId, lesson.pointsAwarded);
+    const redirectUrl = new URL(
+      `/courses/${reward.courseSlug}/lessons/${reward.lessonSlug}`,
+      req.url
+    );
+    if (reward.pointsEarned > 0) {
+      redirectUrl.searchParams.set("earned", String(reward.pointsEarned));
+      if (reward.badgesUnlocked.length > 0)
+        redirectUrl.searchParams.set("badges", reward.badgesUnlocked.join(","));
+      if (reward.newStreakCount !== null)
+        redirectUrl.searchParams.set("streak", String(reward.newStreakCount));
+      if (reward.leveledUp && reward.newLevel !== null)
+        redirectUrl.searchParams.set("level", String(reward.newLevel));
+    }
+    return NextResponse.redirect(redirectUrl);
+  } catch (e) {
+    if (e instanceof NotEnrolledError)
+      return NextResponse.json({ error: "Not enrolled" }, { status: 403 });
+    throw e;
   }
-
-  const enrollment = await prisma.enrollment.findUnique({
-    where: {
-      userId_courseId: {
-        userId,
-        courseId: lesson.module.courseId,
-      },
-    },
-  });
-
-  if (!enrollment) {
-    return NextResponse.json({ error: "Not enrolled" }, { status: 403 });
-  }
-
-  const alreadyCompleted = await prisma.lessonProgress.findUnique({
-    where: { userId_lessonId: { userId, lessonId } },
-  });
-
-  // collected for the toast — only populated on a genuinely new completion
-  let pointsEarned = 0;
-  const badgesUnlocked: string[] = [];
-  let newStreakCount: number | null = null;
-  let leveledUp = false;
-  let newLevel: number | null = null;
-
-  if (!alreadyCompleted?.completed) {
-    // mark lesson complete
-    await prisma.lessonProgress.upsert({
-      where: { userId_lessonId: { userId, lessonId } },
-      update: { completed: true, completedAt: new Date() },
-      create: {
-        userId,
-        lessonId,
-        completed: true,
-        completedAt: new Date(),
-      },
-    });
-
-    // award lesson points
-    pointsEarned += lesson.pointsAwarded;
-    await prisma.user.update({
-      where: { id: userId },
-      data: { points: { increment: lesson.pointsAwarded } },
-    });
-
-    // ── Streak update ─────────────────────────────────────────────
-    const streak = await prisma.streak.findFirst({
-      where: { userId },
-      orderBy: { updatedAt: "desc" },
-    });
-    const now = new Date();
-
-    let currentCount: number;
-    if (!streak || !streak.lastActivityAt) {
-      currentCount = 1;
-    } else if (isSameDay(streak.lastActivityAt, now)) {
-      currentCount = streak.currentCount; // already active today, no change
-    } else if (isYesterday(streak.lastActivityAt, now)) {
-      currentCount = streak.currentCount + 1;
-    } else {
-      currentCount = 1; // streak broken
-    }
-    const longestCount = Math.max(streak?.longestCount ?? 0, currentCount);
-
-    if (streak) {
-      await prisma.streak.update({
-        where: { id: streak.id },
-        data: { currentCount, longestCount, lastActivityAt: now },
-      });
-    } else {
-      await prisma.streak.create({
-        data: { userId, currentCount, longestCount, lastActivityAt: now },
-      });
-    }
-    await prisma.user.update({
-      where: { id: userId },
-      data: { streakDays: currentCount },
-    });
-    newStreakCount = currentCount;
-
-    // recalculate enrollment progress
-    const allLessons = lesson.module.course.modules.flatMap((m) => m.lessons);
-    const completedCount = await prisma.lessonProgress.count({
-      where: { userId, completed: true, lessonId: { in: allLessons.map((l) => l.id) } },
-    });
-    const progressPercent = Math.round((completedCount / allLessons.length) * 100);
-
-    await prisma.enrollment.update({
-      where: { userId_courseId: { userId, courseId: lesson.module.courseId } },
-      data: { progressPercent },
-    });
-
-    // first step badge
-    const totalCompleted = await prisma.lessonProgress.count({
-      where: { userId, completed: true },
-    });
-    if (totalCompleted === 1) {
-      const firstStepBadge = await prisma.badge.findUnique({
-        where: { code: "first-step" },
-      });
-      if (firstStepBadge) {
-        await prisma.userBadge.upsert({
-          where: { userId_badgeId: { userId, badgeId: firstStepBadge.id } },
-          update: {},
-          create: { userId, badgeId: firstStepBadge.id },
-        });
-        await prisma.user.update({
-          where: { id: userId },
-          data: { points: { increment: firstStepBadge.pointsReward } },
-        });
-        pointsEarned += firstStepBadge.pointsReward;
-        badgesUnlocked.push(firstStepBadge.name);
-      }
-    }
-
-    // course complete badge
-    if (progressPercent === 100) {
-      await prisma.enrollment.update({
-        where: { userId_courseId: { userId, courseId: lesson.module.courseId } },
-        data: { status: "COMPLETED", completedAt: new Date() },
-      });
-      const courseBadge = await prisma.badge.findFirst({
-        where: { courseId: lesson.module.courseId, code: "course-complete" },
-      });
-      if (courseBadge) {
-        await prisma.userBadge.upsert({
-          where: { userId_badgeId: { userId, badgeId: courseBadge.id } },
-          update: {},
-          create: { userId, badgeId: courseBadge.id },
-        });
-        await prisma.user.update({
-          where: { id: userId },
-          data: { points: { increment: courseBadge.pointsReward } },
-        });
-        pointsEarned += courseBadge.pointsReward;
-        badgesUnlocked.push(courseBadge.name);
-      }
-    }
-
-    // sync level LAST after all points including badges
-    const userBeforeLevelSync = await prisma.user.findUnique({ where: { id: userId } });
-    const previousLevel = userBeforeLevelSync?.level ?? 1;
-    const finalLevel = Math.floor((userBeforeLevelSync?.points ?? 0) / 100) + 1;
-    if (finalLevel > previousLevel) {
-      leveledUp = true;
-      newLevel = finalLevel;
-    }
-    await prisma.user.update({
-      where: { id: userId },
-      data: { level: finalLevel },
-    });
-
-    // update leaderboard LAST after all points
-    const finalUser2 = await prisma.user.findUnique({ where: { id: userId } });
-
-    const existingAllTime = await prisma.leaderboardEntry.findFirst({
-      where: { userId, period: "all_time" },
-    });
-    if (existingAllTime) {
-      await prisma.leaderboardEntry.update({
-        where: { id: existingAllTime.id },
-        data: { points: finalUser2?.points ?? 0 },
-      });
-    } else {
-      await prisma.leaderboardEntry.create({
-        data: { userId, period: "all_time", points: finalUser2?.points ?? 0 },
-      });
-    }
-
-    const existingRecent = await prisma.leaderboardEntry.findFirst({
-      where: { userId, period: "last_7_days" },
-    });
-    if (existingRecent) {
-      await prisma.leaderboardEntry.update({
-        where: { id: existingRecent.id },
-        data: { points: { increment: lesson.pointsAwarded } },
-      });
-    } else {
-      await prisma.leaderboardEntry.create({
-        data: { userId, period: "last_7_days", points: lesson.pointsAwarded },
-      });
-    }
-  }
-
-  const courseSlug = lesson.module.course.slug;
-  const lessonSlug = lesson.slug;
-
-  const redirectUrl = new URL(`/courses/${courseSlug}/lessons/${lessonSlug}`, req.url);
-
-  // only attach toast data if something was actually newly earned
-  if (pointsEarned > 0) {
-    redirectUrl.searchParams.set("earned", String(pointsEarned));
-    if (badgesUnlocked.length > 0) {
-      redirectUrl.searchParams.set("badges", badgesUnlocked.join(","));
-    }
-    if (newStreakCount !== null) {
-      redirectUrl.searchParams.set("streak", String(newStreakCount));
-    }
-    if (leveledUp && newLevel !== null) {
-      redirectUrl.searchParams.set("level", String(newLevel));
-    }
-  }
-
-  return NextResponse.redirect(redirectUrl);
 }

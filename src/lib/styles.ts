@@ -18,7 +18,7 @@ export const styles = {
 
   // Progress bar
   progressTrack: "h-1.5 w-full rounded-full bg-slate-100",
-  progressFill: "h-full rounded-full bg-emerald-400 transition-all",
+  progressFill: "h-full rounded-full bg-emerald-400 progress-fill-animate",
 
   // Typography
   pageTitle: "text-3xl font-semibold tracking-tight text-slate-950",
@@ -88,7 +88,7 @@ export const styles = {
   statSub: "text-xs text-slate-400 mt-1",
   sectionTitle: "text-lg font-semibold text-slate-900 mb-4",
   levelBarTrack: "h-2 w-full rounded-full bg-slate-100",
-  levelBarFill: "h-full rounded-full bg-emerald-400 transition-all",
+  levelBarFill: "h-full rounded-full bg-emerald-400",
   badgeCard: "rounded-2xl border border-slate-200 p-4 text-center space-y-2",
   badgeIcon: "mx-auto h-12 w-12 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-semibold text-lg",
 
@@ -102,6 +102,9 @@ export const styles = {
   leaderboardAvatar: "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-semibold text-emerald-700",
   tabActive: "rounded-full bg-emerald-600 px-4 py-1.5 text-sm font-medium text-white",
   tabInactive: "rounded-full px-4 py-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors",
+
+  lessonRowChallenge: "flex items-center gap-3 rounded-2xl border p-3 transition-colors border-amber-100 bg-amber-50/50 hover:border-amber-200",
+  lessonDotChallenge: "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium bg-amber-200 text-amber-700",
 } as const;
 
 export const difficultyBadge: Record<string, string> = {

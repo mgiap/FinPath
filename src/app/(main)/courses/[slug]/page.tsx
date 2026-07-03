@@ -94,20 +94,37 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
               {module.lessons.map((lesson, lessonIndex) => {
                 const isDone = completedSet.has(lesson.id);
                 const isLocked = !actualEnrollment;
+                const isChallenge = lesson.type === "CHALLENGE";
 
                 return (
                   <div
                     key={lesson.id}
-                    className={isDone ? styles.lessonRowDone : isLocked ? styles.lessonRowLocked : styles.lessonRowDefault}
+                    className={
+                      isDone ? styles.lessonRowDone
+                      : isLocked ? styles.lessonRowLocked
+                      : isChallenge ? styles.lessonRowChallenge
+                      : styles.lessonRowDefault
+                    }
                   >
-                    <span className={isDone ? styles.lessonDotDone : styles.lessonDotDefault}>
-                      {isDone ? "✓" : lessonIndex + 1}
+                    <span className={
+                      isDone ? styles.lessonDotDone
+                      : isChallenge ? styles.lessonDotChallenge
+                      : styles.lessonDotDefault
+                    }>
+                      {isDone ? "✓" : isChallenge ? "⚡" : lessonIndex + 1}
                     </span>
 
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${isDone ? "text-emerald-800" : "text-slate-800"}`}>
-                        {lesson.title}
-                      </p>
+                      <div className="flex items-center gap-2">
+                        <p className={`text-sm font-medium ${isDone ? "text-emerald-800" : isChallenge ? "text-amber-800" : "text-slate-800"}`}>
+                          {lesson.title}
+                        </p>
+                        {isChallenge && (
+                          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            Challenge
+                          </span>
+                        )}
+                      </div>
                       {lesson.estimatedMinutes && (
                         <p className={`text-xs ${styles.label}`}>{lesson.estimatedMinutes} min</p>
                       )}

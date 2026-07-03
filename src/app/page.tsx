@@ -169,8 +169,8 @@ export default async function Home() {
                       <p className={`text-xs mt-0.5 ${styles.label}`}>{en.course.description}</p>
                       <div className={`mt-2 ${styles.progressTrack}`}>
                         <div
-                          className="h-full rounded-full transition-all"
-                          style={{ width: `${en.progressPercent}%`, backgroundColor: progressColor(en.progressPercent) }}
+                          className="h-full rounded-full progress-fill-animate"
+                          style={{ width: `${en.progressPercent}%`, backgroundColor: progressColor(en.progressPercent), transformOrigin: "left" }}
                         />
                       </div>
                       <p className={`mt-1 text-right text-xs ${styles.label}`}>{en.progressPercent}% complete</p>

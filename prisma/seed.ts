@@ -124,7 +124,6 @@ async function main() {
     },
   });
 
-  // NEW — course3 had 0 modules/lessons, fixing that here
   const module3_1 = await prisma.module.upsert({
     where: { id: "module-3-1" },
     update: {},
@@ -200,7 +199,6 @@ Ninth is Cost Structure — all costs incurred to operate your business model. O
 
 The real power of the Business Model Canvas is not in filling it out once — it is in using it as a living tool to test assumptions, spot weaknesses, and explore alternatives. Successful entrepreneurs revisit their canvas regularly as they learn more about their customers and market.`;
 
-  // NEW — lesson content for the previously-empty course3
   const lesson5Content = `Marketing without metrics is just guessing with extra steps. To make confident decisions about where to spend time and budget, you need to understand a handful of core metrics that show whether your efforts are actually working.
 
 The first metric every marketer should know is Customer Acquisition Cost (CAC) — how much you spend, on average, to acquire one new customer. It is calculated by dividing total marketing and sales spend by the number of new customers gained in that period. A rising CAC over time can signal market saturation, increased competition, or declining campaign efficiency.
@@ -215,7 +213,7 @@ Finally, it is worth distinguishing between leading and lagging indicators. Lead
 
 Mastering these core metrics does not require advanced statistics — it requires discipline in tracking the right numbers consistently and asking what the data is actually telling you before making your next move.`;
 
-  const lesson1 = await prisma.lesson.upsert({
+  await prisma.lesson.upsert({
     where: { id: "lesson-1" },
     update: { content: lesson1Content },
     create: {
@@ -232,7 +230,7 @@ Mastering these core metrics does not require advanced statistics — it require
     },
   });
 
-  const lesson2 = await prisma.lesson.upsert({
+  await prisma.lesson.upsert({
     where: { id: "lesson-2" },
     update: { content: lesson2Content },
     create: {
@@ -249,7 +247,7 @@ Mastering these core metrics does not require advanced statistics — it require
     },
   });
 
-  const lesson3 = await prisma.lesson.upsert({
+  await prisma.lesson.upsert({
     where: { id: "lesson-3" },
     update: { content: lesson3Content },
     create: {
@@ -266,7 +264,7 @@ Mastering these core metrics does not require advanced statistics — it require
     },
   });
 
-  const lesson4 = await prisma.lesson.upsert({
+  await prisma.lesson.upsert({
     where: { id: "lesson-4" },
     update: { content: lesson4Content },
     create: {
@@ -283,8 +281,7 @@ Mastering these core metrics does not require advanced statistics — it require
     },
   });
 
-  // NEW
-  const lesson5 = await prisma.lesson.upsert({
+  await prisma.lesson.upsert({
     where: { id: "lesson-5" },
     update: { content: lesson5Content },
     create: {
@@ -303,8 +300,204 @@ Mastering these core metrics does not require advanced statistics — it require
 
   console.log("✓ Lessons created");
 
+  // ── Challenges (one per module) ───────────────────────────────────
+  const challenge1Data = {
+    questions: [
+      {
+        question: "What problem did money solve compared to bartering?",
+        options: [
+          "It made goods last longer",
+          "It eliminated the need for the 'double coincidence of wants'",
+          "It made goods heavier to transport",
+          "It removed the need for trust between traders",
+        ],
+        correctIndex: 1,
+      },
+      {
+        question: "Which of these is NOT one of the three core functions of money?",
+        options: ["Medium of exchange", "Store of value", "Unit of account", "Source of interest"],
+        correctIndex: 3,
+      },
+      {
+        question: "What is fiat currency?",
+        options: [
+          "Currency backed by gold reserves",
+          "Currency with no government backing at all",
+          "Currency that has value because a government declares it legal tender",
+          "A type of cryptocurrency",
+        ],
+        correctIndex: 2,
+      },
+    ],
+  };
+
+  const challenge2Data = {
+    questions: [
+      {
+        question: "What is the 50/30/20 rule used for?",
+        options: [
+          "Splitting investment portfolios",
+          "Allocating income across needs, wants, and savings",
+          "Calculating loan interest",
+          "Setting tax brackets",
+        ],
+        correctIndex: 1,
+      },
+      {
+        question: "Which is a fixed expense?",
+        options: ["Dining out", "Rent", "Entertainment", "Clothing"],
+        correctIndex: 1,
+      },
+      {
+        question: "What should you base your budget income on if it varies month to month?",
+        options: [
+          "Your highest recent month",
+          "Your average over the past year",
+          "A conservative estimate based on your lowest recent months",
+          "Your expected income next year",
+        ],
+        correctIndex: 2,
+      },
+    ],
+  };
+
+  const challenge3Data = {
+    questions: [
+      {
+        question: "What does the Value Proposition block of the Business Model Canvas describe?",
+        options: [
+          "How you reach customers",
+          "Why a customer would choose you over alternatives",
+          "Your largest costs",
+          "Your key suppliers",
+        ],
+        correctIndex: 1,
+      },
+      {
+        question: "Which block describes how a business actually earns money?",
+        options: ["Key Activities", "Customer Relationships", "Revenue Streams", "Key Resources"],
+        correctIndex: 2,
+      },
+      {
+        question: "What is the main advantage of the Business Model Canvas over a traditional business plan?",
+        options: [
+          "It requires no research",
+          "It's a visual, one-page tool that's easy to revisit and adapt",
+          "It guarantees business success",
+          "It removes the need for a value proposition",
+        ],
+        correctIndex: 1,
+      },
+    ],
+  };
+
+  const challenge4Data = {
+    questions: [
+      {
+        question: "What does CAC measure?",
+        options: [
+          "Total company revenue",
+          "Average cost to acquire one new customer",
+          "Customer satisfaction score",
+          "Number of active users",
+        ],
+        correctIndex: 1,
+      },
+      {
+        question: "Why is comparing LTV to CAC important?",
+        options: [
+          "It shows your stock price",
+          "It checks if customers are worth more than they cost to acquire",
+          "It calculates employee salaries",
+          "It measures website speed",
+        ],
+        correctIndex: 1,
+      },
+      {
+        question: "What's the difference between leading and lagging indicators?",
+        options: [
+          "Leading indicators predict future outcomes; lagging indicators confirm what already happened",
+          "They are the same thing",
+          "Leading indicators are always financial; lagging indicators are not",
+          "Lagging indicators are faster to measure",
+        ],
+        correctIndex: 0,
+      },
+    ],
+  };
+
+  await prisma.lesson.upsert({
+    where: { id: "challenge-1" },
+    update: { challengeData: challenge1Data },
+    create: {
+      id: "challenge-1",
+      moduleId: module1_1.id,
+      title: "Challenge: Money Basics",
+      slug: "challenge-money-basics",
+      summary: "Put your knowledge of money and its functions to the test.",
+      type: LessonType.CHALLENGE,
+      challengeData: challenge1Data,
+      order: 3,
+      estimatedMinutes: 3,
+      pointsAwarded: 20,
+    },
+  });
+
+  await prisma.lesson.upsert({
+    where: { id: "challenge-2" },
+    update: { challengeData: challenge2Data },
+    create: {
+      id: "challenge-2",
+      moduleId: module1_2.id,
+      title: "Challenge: Budgeting",
+      slug: "challenge-budgeting",
+      summary: "Put your budgeting knowledge to the test.",
+      type: LessonType.CHALLENGE,
+      challengeData: challenge2Data,
+      order: 2,
+      estimatedMinutes: 3,
+      pointsAwarded: 20,
+    },
+  });
+
+  await prisma.lesson.upsert({
+    where: { id: "challenge-3" },
+    update: { challengeData: challenge3Data },
+    create: {
+      id: "challenge-3",
+      moduleId: module2_1.id,
+      title: "Challenge: Business Model Canvas",
+      slug: "challenge-business-model-canvas",
+      summary: "Put your Business Model Canvas knowledge to the test.",
+      type: LessonType.CHALLENGE,
+      challengeData: challenge3Data,
+      order: 2,
+      estimatedMinutes: 3,
+      pointsAwarded: 20,
+    },
+  });
+
+  await prisma.lesson.upsert({
+    where: { id: "challenge-4" },
+    update: { challengeData: challenge4Data },
+    create: {
+      id: "challenge-4",
+      moduleId: module3_1.id,
+      title: "Challenge: Marketing Metrics",
+      slug: "challenge-marketing-metrics",
+      summary: "Put your marketing metrics knowledge to the test.",
+      type: LessonType.CHALLENGE,
+      challengeData: challenge4Data,
+      order: 2,
+      estimatedMinutes: 3,
+      pointsAwarded: 20,
+    },
+  });
+
+  console.log("✓ Challenges created");
+
   // ── Badges ───────────────────────────────────────────────────────
-  const badge1 = await prisma.badge.upsert({
+  await prisma.badge.upsert({
     where: { code: "first-step" },
     update: {},
     create: {
@@ -343,46 +536,28 @@ Mastering these core metrics does not require advanced statistics — it require
 
   console.log("✓ Badges created");
 
-  // ── Enrollments for your account (clean start) ───────────────────
+  // ── Enrollments ──────────────────────────────────────────────────
   await prisma.enrollment.upsert({
     where: { userId_courseId: { userId, courseId: course1.id } },
     update: { progressPercent: 0, status: EnrollmentStatus.ACTIVE },
-    create: {
-      userId,
-      courseId: course1.id,
-      status: EnrollmentStatus.ACTIVE,
-      progressPercent: 0,
-    },
+    create: { userId, courseId: course1.id, status: EnrollmentStatus.ACTIVE, progressPercent: 0 },
   });
 
   await prisma.enrollment.upsert({
     where: { userId_courseId: { userId, courseId: course2.id } },
     update: { progressPercent: 0, status: EnrollmentStatus.ACTIVE },
-    create: {
-      userId,
-      courseId: course2.id,
-      status: EnrollmentStatus.ACTIVE,
-      progressPercent: 0,
-    },
+    create: { userId, courseId: course2.id, status: EnrollmentStatus.ACTIVE, progressPercent: 0 },
   });
 
   await prisma.enrollment.upsert({
     where: { userId_courseId: { userId, courseId: course3.id } },
     update: { progressPercent: 0, status: EnrollmentStatus.ACTIVE },
-    create: {
-      userId,
-      courseId: course3.id,
-      status: EnrollmentStatus.ACTIVE,
-      progressPercent: 0,
-    },
+    create: { userId, courseId: course3.id, status: EnrollmentStatus.ACTIVE, progressPercent: 0 },
   });
 
   console.log("✓ Your enrollments reset");
 
-  // ── Fake users for leaderboard ───────────────────────────────────
-  // NEW — added avatarId per user, pulling from the same PRESET_AVATARS
-  // keys used in src/lib/avatars.ts, so they render correctly in the
-  // navbar/leaderboard/profile components.
+  // ── Fake users ───────────────────────────────────────────────────
   const fakeUsers = [
     { name: "Alice Nguyen", email: "alice@finpath.dev", points: 320, level: 4, avatarId: "owl" },
     { name: "Bob Tran", email: "bob@finpath.dev", points: 275, level: 3, avatarId: "rocket" },
@@ -400,21 +575,14 @@ Mastering these core metrics does not require advanced statistics — it require
     const fake = await prisma.user.upsert({
       where: { email: u.email },
       update: { points: u.points, level: u.level, avatarId: u.avatarId },
-      create: {
-        name: u.name,
-        email: u.email,
-        points: u.points,
-        level: u.level,
-        avatarId: u.avatarId,
-      },
+      create: { name: u.name, email: u.email, points: u.points, level: u.level, avatarId: u.avatarId },
     });
     createdFakeUsers.push(fake);
   }
 
   console.log("✓ Fake users created");
 
-  // ── Leaderboard entries ──────────────────────────────────────────
-  // combine fake users + your account (0 points fresh start)
+  // ── Leaderboard ──────────────────────────────────────────────────
   const allForLeaderboard = [
     ...createdFakeUsers.map((u) => ({ id: u.id, points: u.points })),
     { id: userId, points: 0 },
@@ -422,57 +590,27 @@ Mastering these core metrics does not require advanced statistics — it require
 
   for (let i = 0; i < allForLeaderboard.length; i++) {
     const u = allForLeaderboard[i];
-    const existing = await prisma.leaderboardEntry.findFirst({
-      where: { userId: u.id, period: "all_time" },
-    });
+    const existing = await prisma.leaderboardEntry.findFirst({ where: { userId: u.id, period: "all_time" } });
     if (existing) {
-      await prisma.leaderboardEntry.update({
-        where: { id: existing.id },
-        data: { points: u.points, rank: i + 1 },
-      });
+      await prisma.leaderboardEntry.update({ where: { id: existing.id }, data: { points: u.points, rank: i + 1 } });
     } else {
-      await prisma.leaderboardEntry.create({
-        data: {
-          userId: u.id,
-          period: "all_time",
-          points: u.points,
-          rank: i + 1,
-        },
-      });
+      await prisma.leaderboardEntry.create({ data: { userId: u.id, period: "all_time", points: u.points, rank: i + 1 } });
     }
 
-    // last 7 days leaderboard — fake users have partial recent points
     const recentPoints = i < 5 ? Math.floor(u.points * 0.3) : Math.floor(u.points * 0.1);
-    const existingRecent = await prisma.leaderboardEntry.findFirst({
-      where: { userId: u.id, period: "last_7_days" },
-    });
+    const existingRecent = await prisma.leaderboardEntry.findFirst({ where: { userId: u.id, period: "last_7_days" } });
     if (existingRecent) {
-      await prisma.leaderboardEntry.update({
-        where: { id: existingRecent.id },
-        data: { points: recentPoints, rank: i + 1 },
-      });
+      await prisma.leaderboardEntry.update({ where: { id: existingRecent.id }, data: { points: recentPoints, rank: i + 1 } });
     } else {
-      await prisma.leaderboardEntry.create({
-        data: {
-          userId: u.id,
-          period: "last_7_days",
-          points: recentPoints,
-          rank: i + 1,
-        },
-      });
+      await prisma.leaderboardEntry.create({ data: { userId: u.id, period: "last_7_days", points: recentPoints, rank: i + 1 } });
     }
   }
 
   console.log("✓ Leaderboard entries created");
 
-  // ── Streak for your account ──────────────────────────────────────
+  // ── Streak ───────────────────────────────────────────────────────
   await prisma.streak.create({
-    data: {
-      userId,
-      currentCount: 0,
-      longestCount: 0,
-      lastActivityAt: null,
-    },
+    data: { userId, currentCount: 0, longestCount: 0, lastActivityAt: null },
   });
 
   console.log("✓ Streak created");

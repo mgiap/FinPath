@@ -41,7 +41,7 @@ export default async function CoursesPage() {
       )}
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {courses.map((course) => {
+        {courses.map((course, index) => {
           const enrollment = enrollmentMap[course.id];
           const isEnrolled = Boolean(enrollment);
           const progress = enrollment?.progressPercent ?? 0;
@@ -50,7 +50,8 @@ export default async function CoursesPage() {
             <Link
               key={course.id}
               href={`/courses/${course.slug}`}
-              className={`group flex flex-col ${styles.cardHover}`}
+              className={`animate-pop-in group flex flex-col ${styles.cardHover}`}
+              style={{ animationDelay: `${index * 60}ms` }}
             >
               {/* Cover */}
               <div className="mb-4 h-36 w-full overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-50 to-sky-50 flex items-center justify-center text-4xl select-none">
