@@ -159,6 +159,8 @@ model Badge {
   pointsReward Int         @default(0)
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+  triggerType   String?   // "complete_course" | "streak" | "level" | "lessons_count"
+  triggerValue  Int?      // X for streak/level/lessons, null for complete_course
 
   course     Course?     @relation(fields: [courseId], references: [id], onDelete: SetNull)
   userBadges UserBadge[]

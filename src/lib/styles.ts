@@ -110,6 +110,9 @@ export const styles = {
   formInput: "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-emerald-400 focus:outline-none",
   formSelect: "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-emerald-400 focus:outline-none",
   formTextarea: "w-full rounded-xl border border-slate-200 px-3 py-2 text-sm text-slate-900 focus:border-emerald-400 focus:outline-none resize-none",
+
+  challengeQuestion: "rounded-2xl border border-slate-200 bg-white p-4 space-y-3",
+  challengeOptionRow: "flex items-center gap-2",
 } as const;
 
 export const difficultyBadge: Record<string, string> = {

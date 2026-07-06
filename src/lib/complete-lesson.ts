@@ -42,7 +42,6 @@ export async function completeLessonForUser(
     where: { userId_lessonId: { userId, lessonId } },
   });
 
-  // for challenges: always update score, but only award points on first attempt
   const isFirstCompletion = !existing?.completed;
 
   let pointsEarned = 0;
@@ -158,6 +157,62 @@ export async function completeLessonForUser(
         });
         pointsEarned += courseBadge.pointsReward;
         badgesUnlocked.push(courseBadge.name);
+      }
+    }
+
+    // ── Trigger-based badges ──────────────────────────────────────
+    const triggerBadges = await prisma.badge.findMany({
+      where: { triggerType: { not: null } },
+    });
+
+    const updatedUser = await prisma.user.findUnique({ where: { id: userId } });
+    const updatedStreak = await prisma.streak.findFirst({
+      where: { userId },
+      orderBy: { updatedAt: "desc" },
+    });
+    const totalLessonsCompleted = await prisma.lessonProgress.count({
+      where: { userId, completed: true },
+    });
+
+    for (const badge of triggerBadges) {
+      const alreadyEarned = await prisma.userBadge.findUnique({
+        where: { userId_badgeId: { userId, badgeId: badge.id } },
+      });
+      if (alreadyEarned) continue;
+
+      let earned = false;
+
+      if (badge.triggerType === "complete_course" && badge.courseId) {
+        const courseEnrollment = await prisma.enrollment.findUnique({
+          where: { userId_courseId: { userId, courseId: badge.courseId } },
+        });
+        earned = courseEnrollment?.status === "COMPLETED";
+      }
+
+      if (badge.triggerType === "lessons_count" && badge.triggerValue) {
+        earned = totalLessonsCompleted >= badge.triggerValue;
+      }
+
+      if (badge.triggerType === "level" && badge.triggerValue) {
+        earned = (updatedUser?.level ?? 1) >= badge.triggerValue;
+      }
+
+      if (badge.triggerType === "streak" && badge.triggerValue) {
+        earned = (updatedStreak?.currentCount ?? 0) >= badge.triggerValue;
+      }
+
+      if (earned) {
+        await prisma.userBadge.create({
+          data: { userId, badgeId: badge.id },
+        });
+        if (badge.pointsReward > 0) {
+          await prisma.user.update({
+            where: { id: userId },
+            data: { points: { increment: badge.pointsReward } },
+          });
+          pointsEarned += badge.pointsReward;
+        }
+        badgesUnlocked.push(badge.name);
       }
     }
 

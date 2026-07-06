@@ -6,6 +6,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { LessonType } from "@prisma/client";
+import ChallengeBuilder from "@/components/challenge-builder";
 
 async function createLesson(moduleId: string, courseSlug: string, formData: FormData) {
   "use server";
@@ -102,7 +103,10 @@ export default async function AdminModulePage({
             const isChallenge = lesson.type === "CHALLENGE";
 
             return (
-              <details key={lesson.id} className={`rounded-2xl border p-4 ${isChallenge ? "border-amber-200 bg-amber-50/50" : "border-slate-200"}`}>
+              <details
+                key={lesson.id}
+                className={`rounded-2xl border p-4 ${isChallenge ? "border-amber-200 bg-amber-50/50" : "border-slate-200"}`}
+              >
                 <summary className="flex items-center justify-between cursor-pointer">
                   <div className="flex items-center gap-2">
                     <span className={`${styles.badgeBase} ${isChallenge ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
@@ -113,14 +117,17 @@ export default async function AdminModulePage({
                   <div className="flex items-center gap-2">
                     <span className={styles.label}>{lesson.pointsAwarded} pts</span>
                     <form action={deleteLessonWithIds}>
-                      <button type="submit" className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors">
+                      <button
+                        type="submit"
+                        className="rounded-xl border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-red-600 hover:bg-red-100 transition-colors"
+                      >
                         Delete
                       </button>
                     </form>
                   </div>
                 </summary>
 
-                {/* Edit form inside details */}
+                {/* Edit form */}
                 <form action={updateLessonWithIds} className="mt-4 space-y-3 border-t border-slate-100 pt-4">
                   <div className="grid grid-cols-2 gap-3">
                     <div>
@@ -150,12 +157,28 @@ export default async function AdminModulePage({
                     <label className={styles.formLabel}>Summary</label>
                     <input name="summary" defaultValue={lesson.summary ?? ""} className={styles.formInput} />
                   </div>
-                  <div>
-                    <label className={styles.formLabel}>Content</label>
-                    <textarea name="content" defaultValue={lesson.content ?? ""} rows={6} className={styles.formTextarea} />
-                  </div>
+
+                  {/* Content only for non-challenge lessons */}
+                  {!isChallenge && (
+                    <div>
+                      <label className={styles.formLabel}>Content</label>
+                      <textarea name="content" defaultValue={lesson.content ?? ""} rows={6} className={styles.formTextarea} />
+                    </div>
+                  )}
+
                   <button type="submit" className={styles.ctaPrimary}>Save lesson</button>
                 </form>
+
+                {/* Challenge builder — shown separately below the form */}
+                {isChallenge && (
+                  <div className="mt-4 border-t border-amber-100 pt-4">
+                    <p className={`${styles.formLabel} mb-3`}>Challenge questions</p>
+                    <ChallengeBuilder
+                      lessonId={lesson.id}
+                      initialData={lesson.challengeData as { questions: { id: string; question: string; options: { text: string }[]; correctIndex: number }[] } | null}
+                    />
+                  </div>
+                )}
               </details>
             );
           })}
@@ -196,7 +219,7 @@ export default async function AdminModulePage({
           </div>
           <div>
             <label className={styles.formLabel}>Content</label>
-            <textarea name="content" rows={6} className={styles.formTextarea} placeholder="Write the lesson content here..." />
+            <textarea name="content" rows={6} className={styles.formTextarea} placeholder="Write the lesson content here. Leave blank for challenge lessons." />
           </div>
           <button type="submit" className={styles.enrollBtn}>Add lesson</button>
         </form>
