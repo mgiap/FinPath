@@ -42,7 +42,11 @@ export async function completeLessonForUser(
     where: { userId_lessonId: { userId, lessonId } },
   });
 
-  const isFirstCompletion = !existing?.completed;
+  const isChallenge = lesson.type === "CHALLENGE";
+  // challenges only count as cleared at 70%+
+  const cleared = !isChallenge || (scorePercent !== undefined && scorePercent >= 70);
+  // first completion = never completed before AND (article always / challenge must be cleared)
+  const isFirstCompletion = !existing?.completed && cleared;
 
   let pointsEarned = 0;
   const badgesUnlocked: string[] = [];
@@ -52,8 +56,12 @@ export async function completeLessonForUser(
   await prisma.lessonProgress.upsert({
     where: { userId_lessonId: { userId, lessonId } },
     update: {
-      completed: true,
-      completedAt: existing?.completed ? existing.completedAt : new Date(),
+      // only flip completed to true if cleared
+      ...(cleared && !existing?.completed
+        ? { completed: true, completedAt: new Date() }
+        : existing?.completed
+        ? { completedAt: existing.completedAt }
+        : {}),
       score: scorePercent ?? undefined,
       ...(isFirstCompletion && scorePercent !== undefined
         ? { firstAttemptScore: scorePercent }
@@ -62,13 +70,14 @@ export async function completeLessonForUser(
     create: {
       userId,
       lessonId,
-      completed: true,
-      completedAt: new Date(),
+      completed: cleared,
+      completedAt: cleared ? new Date() : undefined,
       score: scorePercent ?? undefined,
       firstAttemptScore: scorePercent ?? undefined,
     },
   });
 
+  // only award points on first cleared completion
   if (isFirstCompletion && pointsToAward > 0) {
     pointsEarned += pointsToAward;
     await prisma.user.update({
@@ -77,7 +86,7 @@ export async function completeLessonForUser(
     });
   }
 
-  // ── Streak ──────────────────────────────────────────────────────
+  // ── Streak — always update on any attempt ───────────────────────
   const streak = await prisma.streak.findFirst({
     where: { userId },
     orderBy: { updatedAt: "desc" },
@@ -103,7 +112,7 @@ export async function completeLessonForUser(
   await prisma.user.update({ where: { id: userId }, data: { streakDays: currentCount } });
   const newStreakCount = currentCount;
 
-  // ── Progress % ──────────────────────────────────────────────────
+  // ── Progress % — only count cleared lessons ─────────────────────
   const allLessons = lesson.module.course.modules.flatMap((m) => m.lessons);
   const completedCount = await prisma.lessonProgress.count({
     where: { userId, completed: true, lessonId: { in: allLessons.map((l) => l.id) } },
@@ -115,7 +124,7 @@ export async function completeLessonForUser(
   });
 
   if (isFirstCompletion) {
-    // ── First step badge ──────────────────────────────────────────
+    // ── First step badge ────────────────────────────────────────
     const totalCompleted = await prisma.lessonProgress.count({
       where: { userId, completed: true },
     });
@@ -136,7 +145,7 @@ export async function completeLessonForUser(
       }
     }
 
-    // ── Course complete badge ─────────────────────────────────────
+    // ── Course complete badge ───────────────────────────────────
     if (progressPercent === 100) {
       await prisma.enrollment.update({
         where: { userId_courseId: { userId, courseId: lesson.module.courseId } },
@@ -160,7 +169,7 @@ export async function completeLessonForUser(
       }
     }
 
-    // ── Trigger-based badges ──────────────────────────────────────
+    // ── Trigger-based badges ────────────────────────────────────
     const triggerBadges = await prisma.badge.findMany({
       where: { triggerType: { not: null } },
     });
@@ -216,7 +225,7 @@ export async function completeLessonForUser(
       }
     }
 
-    // ── Level sync ──────────────────────────────────────────────
+    // ── Level sync ────────────────────────────────────────────
     const userBeforeLevel = await prisma.user.findUnique({ where: { id: userId } });
     const previousLevel = userBeforeLevel?.level ?? 1;
     const finalLevel = Math.floor((userBeforeLevel?.points ?? 0) / 100) + 1;
@@ -226,7 +235,7 @@ export async function completeLessonForUser(
     }
     await prisma.user.update({ where: { id: userId }, data: { level: finalLevel } });
 
-    // ── Leaderboard ──────────────────────────────────────────────
+    // ── Leaderboard ───────────────────────────────────────────
     const finalUser = await prisma.user.findUnique({ where: { id: userId } });
     const existingAllTime = await prisma.leaderboardEntry.findFirst({
       where: { userId, period: "all_time" },

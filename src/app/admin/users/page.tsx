@@ -76,13 +76,9 @@ export default async function AdminUsersPage() {
                 </span>
 
                 {/* Avatar */}
-                {user.image && !user.avatarId ? (
-                <img src={user.image} alt={user.name ?? ""} className="h-10 w-10 rounded-full object-cover shrink-0" />
-                ) : (
                 <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${getAvatar(user.avatarId).gradient} text-lg`}>
-                    {getAvatar(user.avatarId).emoji}
+                  {getAvatar(user.avatarId).emoji}
                 </div>
-                )}
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">

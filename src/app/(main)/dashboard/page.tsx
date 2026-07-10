@@ -7,6 +7,7 @@ import { styles } from "@/lib/styles";
 import { progressColor } from "@/lib/utils";
 import { getEffectiveStreak } from "@/lib/streak";
 import DonutChart from "@/components/donut-chart";
+import BadgeIcon from "@/components/badge-icon";
 
 export default async function DashboardPage() {
   const session = await getServerSession(authOptions);
@@ -137,13 +138,10 @@ export default async function DashboardPage() {
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
           {allBadges.map((ub) => (
             <div key={ub.id} className={styles.badgeCard}>
-              <div className={styles.badgeIcon}>
-                {ub.badge?.icon
-                  ? <img src={ub.badge.icon} alt={ub.badge.name ?? ""} />
-                  : ub.badge?.name?.[0]}
+              <div className="flex justify-center">
+                <BadgeIcon icon={ub.badge?.icon} name={ub.badge?.name} rarity={ub.badge?.rarity} />
               </div>
               <p className="text-sm font-medium text-slate-900">{ub.badge?.name}</p>
-              <p className={styles.label}>{ub.badge?.rarity.toLowerCase()}</p>
               <p className={styles.label}>
                 {ub.unlockedAt ? new Date(ub.unlockedAt).toLocaleDateString() : ""}
               </p>

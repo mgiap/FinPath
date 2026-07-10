@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { styles } from "@/lib/styles";
 import Link from "next/link";
 import { getAvatar } from "@/lib/avatars";
+import BadgeIcon from "@/components/badge-icon";
 
 export default async function LeaderboardPage({
   searchParams,
@@ -19,14 +20,20 @@ export default async function LeaderboardPage({
 
   const entries = await prisma.leaderboardEntry.findMany({
     where: { period: activePeriod },
-    include: { user: true },
+    include: {
+      user: {
+        include: {
+          userBadges: {
+            include: { badge: true },
+          },
+        },
+      },
+    },
     orderBy: { points: "desc" },
     take: 20,
   });
 
-  // recalculate ranks on the fly
   const ranked = entries.map((e, i) => ({ ...e, rank: i + 1 }));
-
   const myEntry = ranked.find((e) => e.userId === userId);
 
   const medals: Record<number, string> = {
@@ -37,7 +44,6 @@ export default async function LeaderboardPage({
 
   return (
     <div className={styles.pageWrapper}>
-      {/* Header */}
       <div className="mb-8">
         <h1 className={styles.pageTitle}>Leaderboard</h1>
         <p className={styles.pageSubtitle}>
@@ -77,7 +83,7 @@ export default async function LeaderboardPage({
 
       {/* Leaderboard list */}
       <div className={`mt-4 ${styles.card}`}>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {ranked.length === 0 && (
             <p className={styles.label}>No entries yet.</p>
           )}
@@ -85,6 +91,9 @@ export default async function LeaderboardPage({
             const isMe = entry.userId === userId;
             const isTop3 = entry.rank <= 3;
             const avatar = getAvatar(entry.user.avatarId);
+            const featuredBadge = entry.user.userBadges.find(
+              (ub) => ub.badgeId === entry.user.featuredBadgeId
+            )?.badge ?? null;
 
             return (
               <div
@@ -103,11 +112,22 @@ export default async function LeaderboardPage({
                   {avatar.emoji}
                 </div>
 
-                {/* Name */}
+                {/* Name + featured badge */}
                 <div className="flex-1 min-w-0">
-                  <p className={`${styles.cardTitle} ${isMe ? "text-emerald-800" : ""}`}>
-                    {entry.user.name ?? "Anonymous"} {isMe && <span className="text-xs font-normal text-emerald-600 ml-1">(you)</span>}
-                  </p>
+                  <div className="flex items-center gap-2">
+                    <p className={`${styles.cardTitle} ${isMe ? "text-emerald-800" : ""}`}>
+                      {entry.user.name ?? "Anonymous"}
+                      {isMe && (
+                        <span className="text-xs font-normal text-emerald-600 ml-1">(you)</span>
+                      )}
+                    </p>
+                    {featuredBadge && (
+                      <span className={`${styles.badgeBase} bg-emerald-100 text-emerald-700`}>
+                        {featuredBadge.icon && <span className="mr-1">{featuredBadge.icon}</span>}
+                        {featuredBadge.name}
+                      </span>
+                    )}
+                  </div>
                   <p className={styles.label}>Level {entry.user.level}</p>
                 </div>
 

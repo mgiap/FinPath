@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { styles, difficultyBadge } from "@/lib/styles";
 import { PRESET_AVATARS } from "@/lib/avatars";
+import BadgeIcon from "@/components/badge-icon";
 
 type Badge = { id: string; name: string; icon: string | null; rarity: string };
 
@@ -44,7 +45,11 @@ export default function ProfileForm({
       const res = await fetch("/api/user/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, avatarId, featuredBadgeId }),
+        body: JSON.stringify({ 
+          name, 
+          avatarId, 
+          ...(unlockedBadges.length > 0 ? { featuredBadgeId } : {}),
+        }),
       });
       const data = await res.json();
       if (!res.ok) {
@@ -111,11 +116,17 @@ export default function ProfileForm({
                 key={b.id}
                 type="button"
                 onClick={() => setFeaturedBadgeId(b.id)}
-                className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs text-slate-900 ${
+                className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs text-slate-900 ${
                   featuredBadgeId === b.id ? "border-emerald-500 bg-emerald-50" : "border-slate-200"
                 }`}
               >
-                {b.icon ? <img src={b.icon} alt="" className="h-4 w-4" /> : null}
+                <BadgeIcon
+                  icon={b.icon}
+                  name={b.name}
+                  rarity={b.rarity as any}
+                  showRarity={false}
+                  size="sm"
+                />
                 {b.name}
                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${rarityBadgeClass[b.rarity] ?? "bg-slate-100 text-slate-600"}`}>
                   {b.rarity.toLowerCase()}

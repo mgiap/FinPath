@@ -66,9 +66,11 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
               </div>
             </div>
           ) : (
-            <button className={styles.enrollBtn}>
-              Enroll in course
-            </button>
+            <form action={`/api/courses/${course.id}/enroll`} method="POST">
+              <button type="submit" className={styles.enrollBtn}>
+                Enroll in course
+              </button>
+            </form>
           )}
         </div>
       </div>

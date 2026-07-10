@@ -113,6 +113,12 @@ export const styles = {
 
   challengeQuestion: "rounded-2xl border border-slate-200 bg-white p-4 space-y-3",
   challengeOptionRow: "flex items-center gap-2",
+
+  heroTitle: "text-5xl font-bold tracking-tight text-slate-950 sm:text-6xl lg:text-7xl leading-tight",
+  heroSubtitle: "text-lg leading-8 text-slate-600 max-w-2xl",
+  featureCard: "rounded-[1.75rem] border border-white/70 bg-white/80 p-8 shadow-sm backdrop-blur flex flex-col gap-4",
+  statNumber: "text-4xl font-bold text-slate-950",
+  stepNumber: "flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-bold text-sm",
 } as const;
 
 export const difficultyBadge: Record<string, string> = {

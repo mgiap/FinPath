@@ -121,3 +121,36 @@ circle, path, line, rect, ellipse {
 .badge-pop {
   animation: badgePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
 }
+
+/* ── Stagger fade-in for landing sections ─────────────────────── */
+@keyframes staggerFade {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-1 { animation: staggerFade 0.6s ease-out 0.1s both; }
+.stagger-2 { animation: staggerFade 0.6s ease-out 0.25s both; }
+.stagger-3 { animation: staggerFade 0.6s ease-out 0.4s both; }
+.stagger-4 { animation: staggerFade 0.6s ease-out 0.55s both; }
+.stagger-5 { animation: staggerFade 0.6s ease-out 0.7s both; }
+
+/* ── Float animation for badge icons ──────────────────────────── */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+}
+
+.float-1 { animation: float 3s ease-in-out infinite; }
+.float-2 { animation: float 3s ease-in-out 0.5s infinite; }
+.float-3 { animation: float 3s ease-in-out 1s infinite; }
+.float-4 { animation: float 3s ease-in-out 1.5s infinite; }
+
+/* ── Pulse glow for CTA button ────────────────────────────────── */
+@keyframes pulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+  50%       { box-shadow: 0 0 0 12px rgba(16, 185, 129, 0); }
+}
+
+.pulse-glow {
+  animation: pulseGlow 2s ease-in-out infinite;
+}
