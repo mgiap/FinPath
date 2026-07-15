@@ -56,7 +56,7 @@ export default async function Home() {
   const myRank = myRankIndex === -1 ? null : myRankIndex + 1;
   const topThree = leaderboardEntries.slice(0, 3);
   const medals = ["🥇", "🥈", "🥉"];
-  const activeEnrollments = enrollments.filter((en) => en.progressPercent > 0);
+  const activeEnrollments = enrollments.filter((en) => en.status === "ACTIVE");
   const displayStreak = getEffectiveStreak(
     streak?.currentCount ?? userRecord?.streakDays ?? 0,
     streak?.lastActivityAt

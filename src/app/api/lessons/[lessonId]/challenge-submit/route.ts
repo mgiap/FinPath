@@ -36,8 +36,10 @@ export async function POST(
   });
 
   const scorePercent = Math.round((correctCount / total) * 100);
-  const pointsToAward = Math.round((lesson.pointsAwarded * correctCount) / total);
   const cleared = scorePercent >= 70;
+
+  // fixed points only when passing, zero if below 70%
+  const pointsToAward = cleared ? lesson.pointsAwarded : 0;
 
   try {
     const reward = await completeLessonForUser(userId, lessonId, pointsToAward, scorePercent);
