@@ -23,7 +23,10 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
 
   if (!course) notFound();
 
-  const [actualEnrollment, completedLessons] = await Promise.all([
+  const [actualEnrollment, completedLessons]: [
+    { userId: string; courseId: string; status: string; enrolledAt: Date; completedAt: Date | null; progressPercent: number } | null,
+    { lessonId: string }[],
+  ] = await Promise.all([
     prisma.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId: course.id } },
     }),
@@ -33,7 +36,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
     }),
   ]);
 
-  const completedSet = new Set(completedLessons.map((l) => l.lessonId));
+  const completedSet = new Set(completedLessons.map((lesson) => lesson.lessonId));
   const totalLessons = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
 
   return (
