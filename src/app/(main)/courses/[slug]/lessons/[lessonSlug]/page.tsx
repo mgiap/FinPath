@@ -50,7 +50,7 @@ export default async function LessonPage({
     }),
   ]);
 
-  const completedSet = new Set(completedLessons.map((l) => l.lessonId));
+  const completedSet = new Set(completedLessons.map((l: { lessonId: string }) => l.lessonId));
   const allLessons = lesson.module.lessons;
   const currentIndex = allLessons.findIndex((l) => l.id === lesson.id);
   const prevLesson = allLessons[currentIndex - 1] ?? null;
