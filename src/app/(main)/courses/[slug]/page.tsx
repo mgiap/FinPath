@@ -5,13 +5,24 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { styles, difficultyBadge } from "@/lib/styles";
+import type { Prisma } from "@prisma/client";
+
+type CourseWithModules = Prisma.CourseGetPayload<{
+  include: {
+    modules: {
+      include: {
+        lessons: true;
+      };
+    };
+  };
+}>;
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const session = await getServerSession(authOptions);
   const userId = session!.user.id;
 
-  const course = await prisma.course.findUnique({
+  const course: CourseWithModules | null = await prisma.course.findUnique({
     where: { slug },
     include: {
       modules: {
@@ -82,7 +93,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
       </div>
 
       <div className="space-y-4">
-        {course.modules.map((module, moduleIndex) => (
+        {course.modules.map((module: CourseWithModules["modules"][number], moduleIndex: number) => (
           <div key={module.id} className={styles.card}>
             <div className="flex items-center gap-3 mb-4">
               <span className={styles.moduleNumber}>
@@ -99,7 +110,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
             )}
 
             <div className="space-y-2">
-              {module.lessons.map((lesson, lessonIndex) => {
+              {module.lessons.map((lesson: CourseWithModules["modules"][number]["lessons"][number], lessonIndex: number) => {
                 const isDone = completedSet.has(lesson.id);
                 const isLocked = !actualEnrollment;
                 const isChallenge = lesson.type === "CHALLENGE";
