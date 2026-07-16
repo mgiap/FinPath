@@ -162,7 +162,7 @@ export default async function LessonPage({
         {/* Sidebar */}
         <aside className="space-y-2">
           <p className={styles.sidebarLabel}>{lesson.module.title}</p>
-          {allLessons.map((l, i) => {
+          {allLessons.map((l: { id: string; slug: string; title: string; type: string }, i) => {
             const isCurrent = l.id === lesson.id;
             const isDone = completedSet.has(l.id);
             const isLessonChallenge = l.type === "CHALLENGE";
