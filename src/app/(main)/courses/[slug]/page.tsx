@@ -37,7 +37,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
   ]);
 
   const completedSet = new Set(completedLessons.map((lesson) => lesson.lessonId));
-  const totalLessons = course.modules.reduce((sum, m) => sum + m.lessons.length, 0);
+  const totalLessons = course.modules.reduce((sum: number, module) => sum + module.lessons.length, 0);
 
   return (
     <div className={styles.pageWrapper}>
