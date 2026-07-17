@@ -34,7 +34,7 @@ export default async function Home() {
       prisma.enrollment.findMany({
         where: { userId },
         include: { course: true },
-        orderBy: { enrolledAt: "desc" },
+        orderBy: { progressPercent: "desc" },
       }),
       prisma.streak.findFirst({ where: { userId }, orderBy: { updatedAt: "desc" } }),
       prisma.leaderboardEntry.findMany({
