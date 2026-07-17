@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { styles, difficultyBadge } from "@/lib/styles";
 import Link from "next/link";
+import { progressColor } from "@/lib/utils";
 
 export default async function CoursesPage() {
   const session = await getServerSession(authOptions);
@@ -91,7 +92,10 @@ export default async function CoursesPage() {
                 {isEnrolled ? (
                   <>
                     <div className={styles.progressTrack}>
-                      <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+                      <div
+                        className="h-full rounded-full transition-all"
+                        style={{ width: `${progress}%`, backgroundColor: progressColor(progress) }}
+                      />
                     </div>
                     <p className={`mt-1.5 ${styles.label}`}>{progress}% complete</p>
                   </>
