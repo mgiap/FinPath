@@ -7,6 +7,7 @@ import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { LessonType } from "@prisma/client";
 import ChallengeBuilder from "@/components/challenge-builder";
+import AddLessonForm from "@/components/add-lesson-form";
 
 async function createLesson(moduleId: string, courseSlug: string, formData: FormData) {
   "use server";
@@ -158,7 +159,6 @@ export default async function AdminModulePage({
                     <input name="summary" defaultValue={lesson.summary ?? ""} className={styles.formInput} />
                   </div>
 
-                  {/* Content only for non-challenge lessons */}
                   {!isChallenge && (
                     <div>
                       <label className={styles.formLabel}>Content</label>
@@ -169,7 +169,6 @@ export default async function AdminModulePage({
                   <button type="submit" className={styles.ctaPrimary}>Save lesson</button>
                 </form>
 
-                {/* Challenge builder — shown separately below the form */}
                 {isChallenge && (
                   <div className="mt-4 border-t border-amber-100 pt-4">
                     <p className={`${styles.formLabel} mb-3`}>Challenge questions</p>
@@ -188,41 +187,7 @@ export default async function AdminModulePage({
       {/* Add lesson form */}
       <div className={`mt-6 ${styles.card}`}>
         <h2 className={styles.sectionTitle}>Add lesson</h2>
-        <form action={createLessonWithIds} className="mt-4 space-y-4">
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={styles.formLabel}>Title</label>
-              <input name="title" required className={styles.formInput} placeholder="e.g. What is Money?" />
-            </div>
-            <div>
-              <label className={styles.formLabel}>Type</label>
-              <select name="type" className={styles.formSelect}>
-                <option value="ARTICLE">Article</option>
-                <option value="CHALLENGE">Challenge</option>
-                <option value="VIDEO">Video</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className={styles.formLabel}>Estimated minutes</label>
-              <input name="estimatedMinutes" type="number" defaultValue={5} className={styles.formInput} />
-            </div>
-            <div>
-              <label className={styles.formLabel}>Points awarded</label>
-              <input name="pointsAwarded" type="number" defaultValue={10} className={styles.formInput} />
-            </div>
-          </div>
-          <div>
-            <label className={styles.formLabel}>Summary</label>
-            <input name="summary" className={styles.formInput} placeholder="Short summary of this lesson" />
-          </div>
-          <div>
-            <label className={styles.formLabel}>Content</label>
-            <textarea name="content" rows={6} className={styles.formTextarea} placeholder="Write the lesson content here. Leave blank for challenge lessons." />
-          </div>
-          <button type="submit" className={styles.enrollBtn}>Add lesson</button>
-        </form>
+        <AddLessonForm action={createLessonWithIds} />
       </div>
     </div>
   );
