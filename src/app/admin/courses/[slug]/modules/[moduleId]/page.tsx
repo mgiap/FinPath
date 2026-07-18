@@ -6,7 +6,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import Link from "next/link";
 import { LessonType } from "@prisma/client";
-import ChallengeBuilder from "@/components/challenge-builder";
 import AddLessonForm from "@/components/add-lesson-form";
 import LessonDetails from "@/components/lesson-details";
 
@@ -102,18 +101,19 @@ export default async function AdminModulePage({
           {module.lessons.map((lesson) => {
             const deleteLessonWithIds = deleteLesson.bind(null, lesson.id, slug, moduleId);
             const updateLessonWithIds = updateLesson.bind(null, lesson.id, slug, moduleId);
-            const isChallenge = lesson.type === "CHALLENGE";
 
             return (
               <LessonDetails
                 key={lesson.id}
                 lessonId={lesson.id}
-                className={`rounded-2xl border p-4 ${isChallenge ? "border-amber-200 bg-amber-50/50" : "border-slate-200"}`}
+                lessonType={lesson.type}
+                lessonContent={lesson.content}
+                challengeData={lesson.challengeData as { questions: { id: string; question: string; options: { text: string }[]; correctIndex: number }[] } | null}
               >
                 <summary className="flex items-center justify-between cursor-pointer">
                   <div className="flex items-center gap-2">
-                    <span className={`${styles.badgeBase} ${isChallenge ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
-                      {isChallenge ? "⚡ Challenge" : lesson.type}
+                    <span className={`${styles.badgeBase} ${lesson.type === "CHALLENGE" ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+                      {lesson.type === "CHALLENGE" ? "⚡ Challenge" : lesson.type}
                     </span>
                     <p className="font-medium text-slate-900">{lesson.title}</p>
                   </div>
@@ -138,49 +138,22 @@ export default async function AdminModulePage({
                       <input name="title" defaultValue={lesson.title} required className={styles.formInput} />
                     </div>
                     <div>
-                      <label className={styles.formLabel}>Type</label>
-                      <select name="type" defaultValue={lesson.type} className={styles.formSelect}>
-                        <option value="ARTICLE">Article</option>
-                        <option value="CHALLENGE">Challenge</option>
-                        <option value="VIDEO">Video</option>
-                      </select>
-                      <p className={`mt-1 ${styles.label}`}>Save after changing type to update content fields.</p>
+                      <label className={styles.formLabel}>Estimated minutes</label>
+                      <input name="estimatedMinutes" type="number" defaultValue={lesson.estimatedMinutes ?? 5} className={styles.formInput} />
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className={styles.formLabel}>Estimated minutes</label>
-                      <input name="estimatedMinutes" type="number" defaultValue={lesson.estimatedMinutes ?? 5} className={styles.formInput} />
-                    </div>
-                    <div>
                       <label className={styles.formLabel}>Points awarded</label>
                       <input name="pointsAwarded" type="number" defaultValue={lesson.pointsAwarded} className={styles.formInput} />
                     </div>
-                  </div>
-                  <div>
-                    <label className={styles.formLabel}>Summary</label>
-                    <input name="summary" defaultValue={lesson.summary ?? ""} className={styles.formInput} />
-                  </div>
-
-                  {!isChallenge && (
                     <div>
-                      <label className={styles.formLabel}>Content</label>
-                      <textarea name="content" defaultValue={lesson.content ?? ""} rows={6} className={styles.formTextarea} />
+                      <label className={styles.formLabel}>Summary</label>
+                      <input name="summary" defaultValue={lesson.summary ?? ""} className={styles.formInput} />
                     </div>
-                  )}
-
+                  </div>
                   <button type="submit" className={styles.ctaPrimary}>Save lesson</button>
                 </form>
-
-                {isChallenge && (
-                  <div className="mt-4 border-t border-amber-100 pt-4">
-                    <p className={`${styles.formLabel} mb-3`}>Challenge questions</p>
-                    <ChallengeBuilder
-                      lessonId={lesson.id}
-                      initialData={lesson.challengeData as { questions: { id: string; question: string; options: { text: string }[]; correctIndex: number }[] } | null}
-                    />
-                  </div>
-                )}
               </LessonDetails>
             );
           })}
