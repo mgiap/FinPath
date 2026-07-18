@@ -5,6 +5,7 @@ import Link from "next/link";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { styles, difficultyBadge } from "@/lib/styles";
+import { progressColor } from "@/lib/utils";
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
@@ -68,7 +69,13 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                 {actualEnrollment.progressPercent}%
               </p>
               <div className={`mt-2 ${styles.progressTrack}`}>
-                <div className={styles.progressFill} style={{ width: `${actualEnrollment.progressPercent}%` }} />
+                <div
+                  className="h-full rounded-full transition-all progress-fill-animate"
+                  style={{
+                    width: `${actualEnrollment.progressPercent}%`,
+                    backgroundColor: progressColor(actualEnrollment.progressPercent),
+                  }}
+                />
               </div>
             </div>
           ) : (

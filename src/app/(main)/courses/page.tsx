@@ -93,7 +93,7 @@ export default async function CoursesPage() {
                   <>
                     <div className={styles.progressTrack}>
                       <div
-                        className="h-full rounded-full transition-all"
+                        className="h-full rounded-full transition-all progress-fill-animate"
                         style={{ width: `${progress}%`, backgroundColor: progressColor(progress) }}
                       />
                     </div>
