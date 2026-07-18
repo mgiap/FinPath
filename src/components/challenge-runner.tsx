@@ -46,7 +46,7 @@ export default function ChallengeRunner({
   const router = useRouter();
 
   const [activeIndices, setActiveIndices] = useState<number[]>(
-    challengeData.questions.map((_, i) => i)
+    challengeData?.questions?.map((_, i) => i) ?? []
   );
   const [selected, setSelected] = useState<Record<number, number>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -54,6 +54,15 @@ export default function ChallengeRunner({
   const [retryMode, setRetryMode] = useState(false);
 
   const allActiveAnswered = activeIndices.every((i) => selected[i] !== undefined);
+
+  // ── Guard: no questions set up ───────────────────────────────────
+  if (!challengeData?.questions?.length) {
+    return (
+      <div className={styles.card}>
+        <p className={styles.label}>No questions available for this challenge.</p>
+      </div>
+    );
+  }
 
   async function handleSubmit() {
     setSubmitting(true);

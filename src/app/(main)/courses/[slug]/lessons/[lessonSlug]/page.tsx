@@ -109,13 +109,34 @@ export default async function LessonPage({
           </div>
 
           {isChallenge ? (
-            <ChallengeRunner
-              lessonId={lesson.id}
-              challengeData={lesson.challengeData as unknown as ChallengeData}
-              courseSlug={slug}
-              lessonSlug={lessonSlug}
-              previousScore={progress?.score ?? null}
-            />
+            (() => {
+              const challengeData = lesson.challengeData as unknown as ChallengeData | null;
+              const hasQuestions =
+                challengeData && Array.isArray(challengeData.questions) && challengeData.questions.length > 0;
+
+              if (!hasQuestions) {
+                return (
+                  <div className={styles.card}>
+                    <p className={styles.label}>
+                      This challenge isn&apos;t set up yet — no questions have been added.
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Check back later, or contact your course admin.
+                    </p>
+                  </div>
+                );
+              }
+
+              return (
+                <ChallengeRunner
+                  lessonId={lesson.id}
+                  challengeData={challengeData}
+                  courseSlug={slug}
+                  lessonSlug={lessonSlug}
+                  previousScore={progress?.score ?? null}
+                />
+              );
+            })()
           ) : (
             <>
               <div className={styles.card}>
