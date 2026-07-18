@@ -58,7 +58,7 @@ async function updateLesson(lessonId: string, courseSlug: string, moduleId: stri
     data: { title, type, summary, content, estimatedMinutes, pointsAwarded },
   });
 
-  redirect(`/admin/courses/${courseSlug}/modules/${moduleId}`);
+  redirect(`/admin/courses/${courseSlug}/modules/${moduleId}?expanded=${lessonId}`);
 }
 
 export default async function AdminModulePage({
@@ -144,6 +144,7 @@ export default async function AdminModulePage({
                         <option value="CHALLENGE">Challenge</option>
                         <option value="VIDEO">Video</option>
                       </select>
+                      <p className={`mt-1 ${styles.label}`}>Save after changing type to update content fields.</p>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-3">
