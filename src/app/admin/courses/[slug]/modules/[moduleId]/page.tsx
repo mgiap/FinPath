@@ -8,6 +8,7 @@ import Link from "next/link";
 import { LessonType } from "@prisma/client";
 import ChallengeBuilder from "@/components/challenge-builder";
 import AddLessonForm from "@/components/add-lesson-form";
+import LessonDetails from "@/components/lesson-details";
 
 async function createLesson(moduleId: string, courseSlug: string, formData: FormData) {
   "use server";
@@ -20,7 +21,7 @@ async function createLesson(moduleId: string, courseSlug: string, formData: Form
   const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
   const count = await prisma.lesson.count({ where: { moduleId } });
 
-  await prisma.lesson.create({
+  const lesson = await prisma.lesson.create({
     data: {
       moduleId,
       title,
@@ -34,7 +35,7 @@ async function createLesson(moduleId: string, courseSlug: string, formData: Form
     },
   });
 
-  redirect(`/admin/courses/${courseSlug}/modules/${moduleId}`);
+  redirect(`/admin/courses/${courseSlug}/modules/${moduleId}?expanded=${lesson.id}`);
 }
 
 async function deleteLesson(lessonId: string, courseSlug: string, moduleId: string) {
@@ -104,8 +105,9 @@ export default async function AdminModulePage({
             const isChallenge = lesson.type === "CHALLENGE";
 
             return (
-              <details
+              <LessonDetails
                 key={lesson.id}
+                lessonId={lesson.id}
                 className={`rounded-2xl border p-4 ${isChallenge ? "border-amber-200 bg-amber-50/50" : "border-slate-200"}`}
               >
                 <summary className="flex items-center justify-between cursor-pointer">
@@ -178,7 +180,7 @@ export default async function AdminModulePage({
                     />
                   </div>
                 )}
-              </details>
+              </LessonDetails>
             );
           })}
         </div>
