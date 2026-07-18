@@ -23,6 +23,13 @@ type SubmitResult = {
   };
 };
 
+// safely extract option text whether it's a string or { text: string }
+function getOptionText(opt: unknown): string {
+  if (typeof opt === "string") return opt;
+  if (opt && typeof opt === "object" && "text" in opt) return (opt as { text: string }).text;
+  return "";
+}
+
 export default function ChallengeRunner({
   lessonId,
   challengeData,
@@ -38,7 +45,6 @@ export default function ChallengeRunner({
 }) {
   const router = useRouter();
 
-  // track which question indices are "active" (not yet correctly answered)
   const [activeIndices, setActiveIndices] = useState<number[]>(
     challengeData.questions.map((_, i) => i)
   );
@@ -52,8 +58,6 @@ export default function ChallengeRunner({
   async function handleSubmit() {
     setSubmitting(true);
     try {
-      // build answers array — for retry, only send active (wrong) ones
-      // but we need to send all answers for scoring, using -1 for already-correct
       const answers = challengeData.questions.map((_, i) =>
         activeIndices.includes(i) ? (selected[i] ?? -1) : challengeData.questions[i].correctIndex
       );
@@ -73,7 +77,6 @@ export default function ChallengeRunner({
 
   function handleRetry() {
     if (!result) return;
-    // only reset wrong questions
     const wrongIndices = result.results
       .map((r, i) => (!r.isCorrect ? i : -1))
       .filter((i) => i !== -1);
@@ -87,17 +90,17 @@ export default function ChallengeRunner({
     if (!result) return;
     const url = new URL(`/courses/${courseSlug}`, window.location.origin);
     if (result.reward.pointsEarned > 0) {
-        url.searchParams.set("earned", String(result.reward.pointsEarned));
-        if (result.reward.badgesUnlocked.length > 0)
+      url.searchParams.set("earned", String(result.reward.pointsEarned));
+      if (result.reward.badgesUnlocked.length > 0)
         url.searchParams.set("badges", result.reward.badgesUnlocked.join(","));
-        if (result.reward.newStreakCount !== null)
+      if (result.reward.newStreakCount !== null)
         url.searchParams.set("streak", String(result.reward.newStreakCount));
-        if (result.reward.leveledUp && result.reward.newLevel !== null)
+      if (result.reward.leveledUp && result.reward.newLevel !== null)
         url.searchParams.set("level", String(result.reward.newLevel));
     }
     router.push(url.pathname + url.search);
     router.refresh();
-}
+  }
 
   // ── Results screen ───────────────────────────────────────────────
   if (result) {
@@ -182,30 +185,30 @@ export default function ChallengeRunner({
               </p>
               <div className="mt-2 space-y-2">
                 {q.options.map((opt, oi) => (
-                    <label
-                        key={oi}
-                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm text-slate-900 transition cursor-pointer ${
-                            isCorrectLocked
-                            ? "border-emerald-200 bg-emerald-50 cursor-not-allowed"
-                            : selected[qi] === oi
-                            ? "border-emerald-500 bg-emerald-50"
-                            : "border-slate-200 hover:border-slate-300"
-                        }`}
-                        >
-                        <input
-                            type="radio"
-                            name={`q-${qi}`}
-                            disabled={isCorrectLocked}
-                            checked={isCorrectLocked ? oi === q.correctIndex : selected[qi] === oi}
-                            onChange={() => {
-                            if (!isCorrectLocked) {
-                                setSelected((prev) => ({ ...prev, [qi]: oi }));
-                            }
-                            }}
-                        />
-                        {opt}
-                        </label>
-                    ))}
+                  <label
+                    key={oi}
+                    className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm text-slate-900 transition cursor-pointer ${
+                      isCorrectLocked
+                        ? "border-emerald-200 bg-emerald-50 cursor-not-allowed"
+                        : selected[qi] === oi
+                        ? "border-emerald-500 bg-emerald-50"
+                        : "border-slate-200 hover:border-slate-300"
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name={`q-${qi}`}
+                      disabled={isCorrectLocked}
+                      checked={isCorrectLocked ? oi === q.correctIndex : selected[qi] === oi}
+                      onChange={() => {
+                        if (!isCorrectLocked) {
+                          setSelected((prev) => ({ ...prev, [qi]: oi }));
+                        }
+                      }}
+                    />
+                    {getOptionText(opt)}
+                  </label>
+                ))}
               </div>
             </div>
           );
