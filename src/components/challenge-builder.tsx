@@ -88,6 +88,55 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
     ));
   }
 
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const json = JSON.parse(event.target?.result as string);
+
+        if (!Array.isArray(json.questions)) {
+          setError("Invalid JSON format. Expected { questions: [...] }");
+          return;
+        }
+
+        const parsed: Question[] = json.questions.map((q: any, i: number) => {
+          if (!q.question || !Array.isArray(q.options) || q.correctIndex === undefined) {
+            throw new Error(`Question ${i + 1} is missing required fields.`);
+          }
+          if (q.options.length < 2 || q.options.length > 4) {
+            throw new Error(`Question ${i + 1} must have 2-4 options.`);
+          }
+          if (q.correctIndex < 0 || q.correctIndex >= q.options.length) {
+            throw new Error(`Question ${i + 1} has an invalid correctIndex.`);
+          }
+          return {
+            id: crypto.randomUUID(),
+            question: q.question,
+            options: q.options.map((o: any) => ({
+              text: typeof o === "string" ? o : o.text ?? "",
+            })),
+            correctIndex: q.correctIndex,
+          };
+        });
+
+        if (parsed.length < 3 || parsed.length > 10) {
+          setError("JSON must contain between 3 and 10 questions.");
+          return;
+        }
+
+        setQuestions(parsed);
+        setError(null);
+      } catch (err: any) {
+        setError(`JSON parse error: ${err.message}`);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  }
+
   async function handleSave() {
     // Validate
     if (questions.length < 3) {
@@ -138,18 +187,29 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
             )}
           </p>
         </div>
-        <button
-          onClick={addQuestion}
-          disabled={questions.length >= 10}
-          className={`${styles.ctaPrimary} disabled:opacity-50`}
-        >
-          + Add question
-        </button>
+        <div className="flex items-center gap-2">
+          <label className={`${styles.ctaGhost} cursor-pointer`}>
+            Upload JSON
+            <input
+              type="file"
+              accept=".json"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+          </label>
+          <button
+            onClick={addQuestion}
+            disabled={questions.length >= 10}
+            className={`${styles.ctaPrimary} disabled:opacity-50`}
+          >
+            + Add question
+          </button>
+        </div>
       </div>
 
       {questions.length === 0 && (
         <div className={styles.emptyState}>
-          No questions yet — click "Add question" to start.
+          No questions yet — click "Add question" to start, or upload a JSON file.
         </div>
       )}
 
