@@ -37,7 +37,6 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
   const [error, setError] = useState<string | null>(null);
 
   function addQuestion() {
-    if (questions.length >= 10) return;
     setQuestions([
       ...questions,
       {
@@ -122,8 +121,8 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
           };
         });
 
-        if (parsed.length < 3 || parsed.length > 10) {
-          setError("JSON must contain between 3 and 10 questions.");
+        if (parsed.length < 3) {
+          setError("JSON must contain at least 3 questions.");
           return;
         }
 
@@ -181,7 +180,7 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-slate-700">
-            {questions.length} / 10 questions
+            {questions.length} question{questions.length !== 1 ? "s" : ""}
             {questions.length < 3 && (
               <span className="ml-2 text-amber-600">(minimum 3)</span>
             )}
@@ -199,8 +198,7 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
           </label>
           <button
             onClick={addQuestion}
-            disabled={questions.length >= 10}
-            className={`${styles.ctaPrimary} disabled:opacity-50`}
+            className={styles.ctaPrimary}
           >
             + Add question
           </button>
