@@ -35,6 +35,8 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showPasteBox, setShowPasteBox] = useState(false);
+  const [pasteText, setPasteText] = useState("");
 
   function addQuestion() {
     setQuestions([
@@ -87,53 +89,47 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
     ));
   }
 
-  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  function handlePasteImport() {
+    try {
+      const json = JSON.parse(pasteText);
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const json = JSON.parse(event.target?.result as string);
-
-        if (!Array.isArray(json.questions)) {
-          setError("Invalid JSON format. Expected { questions: [...] }");
-          return;
-        }
-
-        const parsed: Question[] = json.questions.map((q: any, i: number) => {
-          if (!q.question || !Array.isArray(q.options) || q.correctIndex === undefined) {
-            throw new Error(`Question ${i + 1} is missing required fields.`);
-          }
-          if (q.options.length < 2 || q.options.length > 4) {
-            throw new Error(`Question ${i + 1} must have 2-4 options.`);
-          }
-          if (q.correctIndex < 0 || q.correctIndex >= q.options.length) {
-            throw new Error(`Question ${i + 1} has an invalid correctIndex.`);
-          }
-          return {
-            id: crypto.randomUUID(),
-            question: q.question,
-            options: q.options.map((o: any) => ({
-              text: typeof o === "string" ? o : o.text ?? "",
-            })),
-            correctIndex: q.correctIndex,
-          };
-        });
-
-        if (parsed.length < 3) {
-          setError("JSON must contain at least 3 questions.");
-          return;
-        }
-
-        setQuestions(parsed);
-        setError(null);
-      } catch (err: any) {
-        setError(`JSON parse error: ${err.message}`);
+      if (!Array.isArray(json.questions)) {
+        setError("Invalid JSON format. Expected { questions: [...] }");
+        return;
       }
-    };
-    reader.readAsText(file);
-    e.target.value = "";
+
+      const parsed: Question[] = json.questions.map((q: any, i: number) => {
+        if (!q.question || !Array.isArray(q.options) || q.correctIndex === undefined) {
+          throw new Error(`Question ${i + 1} is missing required fields.`);
+        }
+        if (q.options.length < 2 || q.options.length > 4) {
+          throw new Error(`Question ${i + 1} must have 2-4 options.`);
+        }
+        if (q.correctIndex < 0 || q.correctIndex >= q.options.length) {
+          throw new Error(`Question ${i + 1} has an invalid correctIndex.`);
+        }
+        return {
+          id: crypto.randomUUID(),
+          question: q.question,
+          options: q.options.map((o: any) => ({
+            text: typeof o === "string" ? o : o.text ?? "",
+          })),
+          correctIndex: q.correctIndex,
+        };
+      });
+
+      if (parsed.length < 3) {
+        setError("JSON must contain at least 3 questions.");
+        return;
+      }
+
+      setQuestions(parsed);
+      setError(null);
+      setPasteText("");
+      setShowPasteBox(false);
+    } catch (err: any) {
+      setError(`JSON parse error: ${err.message}`);
+    }
   }
 
   async function handleSave() {
@@ -187,15 +183,12 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <label className={`${styles.ctaGhost} cursor-pointer`}>
-            Upload JSON
-            <input
-              type="file"
-              accept=".json"
-              onChange={handleFileUpload}
-              className="hidden"
-            />
-          </label>
+          <button
+            onClick={() => setShowPasteBox((v) => !v)}
+            className={styles.ctaGhost}
+          >
+            {showPasteBox ? "Cancel paste" : "Paste JSON"}
+          </button>
           <button
             onClick={addQuestion}
             className={styles.ctaPrimary}
@@ -205,9 +198,28 @@ export default function ChallengeBuilder({ lessonId, initialData }: ChallengeBui
         </div>
       </div>
 
-      {questions.length === 0 && (
+      {showPasteBox && (
+        <div className="space-y-2 rounded-xl border border-slate-200 p-3">
+          <textarea
+            value={pasteText}
+            onChange={(e) => setPasteText(e.target.value)}
+            rows={8}
+            className={`${styles.formInput} font-mono text-xs`}
+            placeholder={`{\n  "questions": [\n    {\n      "question": "...",\n      "options": [{ "text": "..." }, { "text": "..." }],\n      "correctIndex": 0\n    }\n  ]\n}`}
+          />
+          <button
+            onClick={handlePasteImport}
+            disabled={!pasteText.trim()}
+            className={`${styles.ctaPrimary} disabled:opacity-50`}
+          >
+            Import
+          </button>
+        </div>
+      )}
+
+      {questions.length === 0 && !showPasteBox && (
         <div className={styles.emptyState}>
-          No questions yet — click "Add question" to start, or upload a JSON file.
+          No questions yet — click "Add question" to start, or paste JSON.
         </div>
       )}
 
